@@ -10,9 +10,9 @@
     <version>0.1.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>spring-analyzer-scm</artifactId>
-  <name>spring-analyzer-scm</name>
-  <description>SCM clients for GitHub and GitLab, git clone via JGit</description>
+  <artifactId>spring-analyzer-ui</artifactId>
+  <name>spring-analyzer-ui</name>
+  <description>CLI UI components: progress bars, spinners and terminal utilities</description>
 
   <dependencies>
     <dependency>
@@ -20,16 +20,8 @@
       <artifactId>spring-boot-starter</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.eclipse.jgit</groupId>
-      <artifactId>org.eclipse.jgit</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.kohsuke</groupId>
-      <artifactId>github-api</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.gitlab4j</groupId>
-      <artifactId>gitlab4j-api</artifactId>
+      <groupId>info.picocli</groupId>
+      <artifactId>picocli</artifactId>
     </dependency>
   </dependencies>
 

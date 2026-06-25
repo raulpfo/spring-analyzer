@@ -5,5 +5,5 @@ spring:
 
 logging:
   level:
-    root: WARN
-    io.github.springanalyzer: INFO
+    root: ERROR
+    io.github.springanalyzer: ERROR

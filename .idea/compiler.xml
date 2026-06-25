@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <annotationProcessing>
+      <profile name="Maven default annotation processors profile" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <module name="spring-analyzer-commands" />
+        <module name="spring-analyzer-application" />
+        <module name="spring-analyzer-scm" />
+        <module name="spring-analyzer-domain" />
+        <module name="spring-analyzer-boot" />
+        <module name="spring-analyzer-core" />
+        <module name="spring-analyzer-analyzers" />
+        <module name="spring-analyzer-reporter" />
+      </profile>
+    </annotationProcessing>
+  </component>
+  <component name="JavacSettings">
+    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="spring-analyzer-analyzers" options="-parameters" />
+      <module name="spring-analyzer-application" options="-parameters" />
+      <module name="spring-analyzer-boot" options="-parameters" />
+      <module name="spring-analyzer-commands" options="-parameters" />
+      <module name="spring-analyzer-core" options="-parameters" />
+      <module name="spring-analyzer-domain" options="-parameters" />
+      <module name="spring-analyzer-reporter" options="-parameters" />
+      <module name="spring-analyzer-scm" options="-parameters" />
+    </option>
+  </component>
+</project>

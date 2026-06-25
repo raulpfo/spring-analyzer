@@ -27,6 +27,10 @@
     <module>spring-analyzer-reporter</module>
     <module>spring-analyzer-commands</module>
     <module>spring-analyzer-boot</module>
+    <module>spring-analyzer-domain</module>
+    <module>spring-analyzer-application</module>
+    <module>spring-analyzer-ui</module>
+
   </modules>
 
   <properties>
@@ -69,6 +73,21 @@
       <dependency>
         <groupId>io.github.spring-analyzer</groupId>
         <artifactId>spring-analyzer-commands</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.github.spring-analyzer</groupId>
+        <artifactId>spring-analyzer-domain</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.github.spring-analyzer</groupId>
+        <artifactId>spring-analyzer-application</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.github.spring-analyzer</groupId>
+        <artifactId>spring-analyzer-ui</artifactId>
         <version>${project.version}</version>
       </dependency>
 
