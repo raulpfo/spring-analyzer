@@ -22,6 +22,16 @@ class ScmProviderTest {
   }
 
   @Test
+  void doesNotMatchHostsThatMerelyContainTheDefaultHostAsASubstring() {
+    assertThat(ScmProvider.detectFromUrl("https://git.mycompany-github.com/org/repo.git")).isEmpty();
+  }
+
+  @Test
+  void detectsGithubOnEnterpriseSubdomain() {
+    assertThat(ScmProvider.detectFromUrl("https://ghe.github.com/org/repo.git")).contains(ScmProvider.GITHUB);
+  }
+
+  @Test
   void returnsEmptyForNullUrl() {
     assertThat(ScmProvider.detectFromUrl(null)).isEmpty();
   }

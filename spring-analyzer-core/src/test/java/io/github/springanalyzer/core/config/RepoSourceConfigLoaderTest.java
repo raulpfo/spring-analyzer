@@ -69,6 +69,20 @@ class RepoSourceConfigLoaderTest {
   }
 
   @Test
+  void failsWhenBranchIsNotATextValue() {
+    final String yaml = """
+        repos:
+          - url: https://github.com/org/repo.git
+            branch: true
+        """;
+
+    assertThatThrownBy(() -> loader.parse(new StringReader(yaml)))
+        .isInstanceOf(RepoSourceConfigException.class)
+        .hasMessageContaining("branch")
+        .hasMessageContaining("repos[0]");
+  }
+
+  @Test
   void failsWhenExplicitProviderIsUnknown() {
     final String yaml = """
         repos:

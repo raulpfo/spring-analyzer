@@ -49,7 +49,11 @@ public class RepoSourceConfigLoader {
       throw new RepoSourceConfigException("Falta 'url' en 'repos[" + index + "]'");
     }
 
-    final String branch = repoMap.get("branch") instanceof String branchValue ? branchValue : null;
+    final Object rawBranch = repoMap.get("branch");
+    if (rawBranch != null && !(rawBranch instanceof String)) {
+      throw new RepoSourceConfigException("El campo 'branch' en 'repos[" + index + "]' debe ser texto");
+    }
+    final String branch = (String) rawBranch;
     final ScmProvider provider = resolveProvider(index, repoMap.get("provider"), url);
 
     return new RepoDefinition(url, branch, provider);

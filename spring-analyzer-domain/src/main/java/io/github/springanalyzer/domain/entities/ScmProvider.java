@@ -1,5 +1,7 @@
 package io.github.springanalyzer.domain.entities;
 
+import java.net.URI;
+import java.util.Locale;
 import java.util.Optional;
 
 public enum ScmProvider {
@@ -19,14 +21,27 @@ public enum ScmProvider {
   }
 
   public static Optional<ScmProvider> detectFromUrl(final String url) {
-    if (url == null) {
+    final String host = hostOf(url);
+    if (host == null) {
       return Optional.empty();
     }
     for (final ScmProvider provider : values()) {
-      if (url.contains(provider.defaultHost)) {
+      if (host.equals(provider.defaultHost) || host.endsWith("." + provider.defaultHost)) {
         return Optional.of(provider);
       }
     }
     return Optional.empty();
+  }
+
+  private static String hostOf(final String url) {
+    if (url == null) {
+      return null;
+    }
+    try {
+      final String host = URI.create(url).getHost();
+      return host == null ? null : host.toLowerCase(Locale.ROOT);
+    } catch (IllegalArgumentException e) {
+      return null;
+    }
   }
 }
