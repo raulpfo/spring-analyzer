@@ -1,7 +1,7 @@
 package io.github.springanalyzer.commands;
 
-import io.github.springanalyzer.commands.ui.MultiProgressBar;
-import io.github.springanalyzer.commands.ui.ProgressBar;
+import io.github.springanalyzer.ui.cli.MultiProgressBar;
+import io.github.springanalyzer.ui.cli.ProgressBar;
 import io.github.springanalyzer.domain.entities.CommandConfig;
 import io.github.springanalyzer.domain.entities.ReportFormat;
 import io.github.springanalyzer.domain.usecase.LaunchSpringAnalyzeUseCase;

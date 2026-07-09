@@ -1,4 +1,4 @@
-package io.github.springanalyzer.commands.ui;
+package io.github.springanalyzer.ui.cli;
 
 import io.micrometer.common.util.StringUtils;
 import org.springframework.stereotype.Component;
