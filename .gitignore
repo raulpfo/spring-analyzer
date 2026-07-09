@@ -38,3 +38,4 @@ tmp/
 *.html
 *.md
 !README.md
+!CLAUDE.md
