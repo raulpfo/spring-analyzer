@@ -55,6 +55,21 @@ class GitClonerTest {
   }
 
   @Test
+  void clonesDefaultBranchWhenBranchIsBlank(@TempDir final Path sourceDir) throws Exception {
+    initFixtureRepo(sourceDir, "main").close();
+
+    final RepoDefinition repo = new RepoDefinition(sourceDir.toUri().toString(), "   ", ScmProvider.GITHUB);
+
+    final Path clonedDir = gitCloner.clone(repo, Optional.empty());
+
+    try {
+      assertThat(clonedDir.resolve("README.md")).exists();
+    } finally {
+      gitCloner.cleanup(clonedDir);
+    }
+  }
+
+  @Test
   void clonesSuccessfullyWhenTokenIsProvidedForLocalTransport(@TempDir final Path sourceDir) throws Exception {
     initFixtureRepo(sourceDir, "main").close();
 

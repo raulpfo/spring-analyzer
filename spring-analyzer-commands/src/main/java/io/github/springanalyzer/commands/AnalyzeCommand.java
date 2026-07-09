@@ -98,7 +98,7 @@ public class AnalyzeCommand implements Runnable {
     final CredentialResolver credentialResolver = new CredentialResolver(config);
     final List<RepoDefinition> repos = repoSourceConfig.repos();
 
-    multiProgressBar.start(repos.stream().map(AnalyzeCommand::displayName).toList());
+    multiProgressBar.start(repos.stream().map(RepoDefinition::repoName).toList());
 
     final Map<String, Path> clonedDirectories = new ConcurrentHashMap<>();
 
@@ -122,7 +122,7 @@ public class AnalyzeCommand implements Runnable {
   }
 
   private void cloneRepo(final RepoDefinition repo, final CredentialResolver credentialResolver, final Map<String, Path> clonedDirectories) {
-    final String name = displayName(repo);
+    final String name = repo.repoName();
     try {
       final Optional<String> token = credentialResolver.resolve(repo.provider());
       final Path clonedDir = gitCloner.clone(repo, token);
@@ -131,13 +131,5 @@ public class AnalyzeCommand implements Runnable {
     } catch (Exception e) {
       multiProgressBar.error(name);
     }
-  }
-
-  private static String displayName(final RepoDefinition repo) {
-    final String url = repo.url();
-    final String trimmed = url.endsWith("/") ? url.substring(0, url.length() - 1) : url;
-    final int lastSlash = trimmed.lastIndexOf('/');
-    final String candidate = lastSlash >= 0 ? trimmed.substring(lastSlash + 1) : trimmed;
-    return candidate.endsWith(".git") ? candidate.substring(0, candidate.length() - 4) : candidate;
   }
 }

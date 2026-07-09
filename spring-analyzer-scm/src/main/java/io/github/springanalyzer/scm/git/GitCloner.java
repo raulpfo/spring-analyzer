@@ -7,15 +7,13 @@ import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
+import org.eclipse.jgit.util.FileUtils;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Comparator;
 import java.util.Optional;
-import java.util.stream.Stream;
 
 @Component
 public class GitCloner {
@@ -46,18 +44,10 @@ public class GitCloner {
     if (directory == null || !Files.exists(directory)) {
       return;
     }
-    try (Stream<Path> walk = Files.walk(directory)) {
-      walk.sorted(Comparator.reverseOrder()).forEach(this::deleteQuietly);
+    try {
+      FileUtils.delete(directory.toFile(), FileUtils.RECURSIVE | FileUtils.RETRY);
     } catch (IOException e) {
       throw new GitCloneException("No se pudo limpiar el directorio temporal " + directory, e);
-    }
-  }
-
-  private void deleteQuietly(final Path path) {
-    try {
-      Files.delete(path);
-    } catch (IOException e) {
-      throw new UncheckedIOException("No se pudo eliminar " + path, e);
     }
   }
 
@@ -70,12 +60,7 @@ public class GitCloner {
   }
 
   private String sanitize(final RepoDefinition repo) {
-    final String url = repo.url();
-    final String trimmed = url.endsWith("/") ? url.substring(0, url.length() - 1) : url;
-    final int lastSlash = trimmed.lastIndexOf('/');
-    final String candidate = lastSlash >= 0 ? trimmed.substring(lastSlash + 1) : trimmed;
-    final String withoutGitSuffix = candidate.endsWith(".git") ? candidate.substring(0, candidate.length() - 4) : candidate;
-    return withoutGitSuffix.replaceAll("[^a-zA-Z0-9._-]", "_");
+    return repo.repoName().replaceAll("[^a-zA-Z0-9._-]", "_");
   }
 
   private CredentialsProvider credentialsProvider(final ScmProvider provider, final String token) {
