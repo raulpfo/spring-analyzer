@@ -1,4 +1,4 @@
-package io.github.springanalyzer.commands.ui;
+package io.github.springanalyzer.ui.cli;
 
 import org.springframework.stereotype.Component;
 import picocli.CommandLine.Help.Ansi;
