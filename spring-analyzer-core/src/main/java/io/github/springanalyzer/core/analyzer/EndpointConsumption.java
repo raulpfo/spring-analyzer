@@ -1,4 +1,4 @@
-package io.github.springanalyzer.analyzers.spring;
+package io.github.springanalyzer.core.analyzer;
 
 public record EndpointConsumption(String targetService, String path, HttpMethod method) {
   public EndpointConsumption {

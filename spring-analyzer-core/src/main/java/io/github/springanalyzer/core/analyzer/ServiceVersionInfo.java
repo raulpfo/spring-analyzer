@@ -1,4 +1,4 @@
-package io.github.springanalyzer.analyzers.version;
+package io.github.springanalyzer.core.analyzer;
 
 import java.util.List;
 

@@ -1,5 +1,8 @@
 package io.github.springanalyzer.analyzers.spring;
 
+import io.github.springanalyzer.core.analyzer.EndpointConsumption;
+import io.github.springanalyzer.core.analyzer.HttpMethod;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 

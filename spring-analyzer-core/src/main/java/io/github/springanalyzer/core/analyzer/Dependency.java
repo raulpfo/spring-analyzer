@@ -1,4 +1,4 @@
-package io.github.springanalyzer.analyzers.version;
+package io.github.springanalyzer.core.analyzer;
 
 public record Dependency(String groupId, String artifactId, String version) {
   public Dependency {

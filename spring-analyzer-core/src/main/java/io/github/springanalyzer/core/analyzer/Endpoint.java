@@ -1,4 +1,4 @@
-package io.github.springanalyzer.analyzers.spring;
+package io.github.springanalyzer.core.analyzer;
 
 public record Endpoint(HttpMethod method, String path, String owner) {
   public Endpoint {

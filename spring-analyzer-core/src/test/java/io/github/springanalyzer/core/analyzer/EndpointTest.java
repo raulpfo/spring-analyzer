@@ -1,4 +1,4 @@
-package io.github.springanalyzer.analyzers.spring;
+package io.github.springanalyzer.core.analyzer;
 
 import org.junit.jupiter.api.Test;
 
