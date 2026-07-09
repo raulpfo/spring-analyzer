@@ -9,6 +9,7 @@ public record CommandConfig(
     String tokenEnv,
     int threads,
     boolean verbose,
-    boolean dryRun
+    boolean dryRun,
+    boolean keepTempDirs
 ) {
 }

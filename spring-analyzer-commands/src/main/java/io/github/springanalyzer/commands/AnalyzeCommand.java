@@ -1,8 +1,13 @@
 package io.github.springanalyzer.commands;
 
+import io.github.springanalyzer.core.config.RepoSourceConfigLoader;
+import io.github.springanalyzer.domain.credentials.CredentialResolver;
 import io.github.springanalyzer.domain.entities.CommandConfig;
+import io.github.springanalyzer.domain.entities.RepoDefinition;
+import io.github.springanalyzer.domain.entities.RepoSourceConfig;
 import io.github.springanalyzer.domain.entities.ReportFormat;
 import io.github.springanalyzer.domain.usecase.LaunchSpringAnalyzeUseCase;
+import io.github.springanalyzer.scm.git.GitCloner;
 import io.github.springanalyzer.ui.cli.ProgressBar;
 import io.github.springanalyzer.ui.cli.MultiProgressBar;
 import lombok.RequiredArgsConstructor;
@@ -11,8 +16,11 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Help.Visibility;
 import picocli.CommandLine.Option;
 
+import java.nio.file.Path;
 import java.util.List;
-import java.util.Random;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
@@ -31,6 +39,10 @@ public class AnalyzeCommand implements Runnable {
   private final ProgressBar progressBar;
 
   private final MultiProgressBar multiProgressBar;
+
+  private final RepoSourceConfigLoader repoSourceConfigLoader;
+
+  private final GitCloner gitCloner;
 
   @Option(names = {"-c", "--config"}, description = "Path to repos.yml config file", required = true)
   private String configPath;
@@ -59,8 +71,11 @@ public class AnalyzeCommand implements Runnable {
   @Option(names = {"--dry-run"}, description = "Print the resolved configuration without cloning or analyzing anything")
   private boolean dryRun;
 
+  @Option(names = {"--keep-temp-dirs"}, description = "Keep the cloned repositories' temporary directories after the analysis (useful for debugging)")
+  private boolean keepTempDirs;
+
   CommandConfig toCommandConfig() {
-    return new CommandConfig(configPath, outputPath, format, githubToken, gitlabToken, tokenEnv, resolveThreads(), verbose, dryRun);
+    return new CommandConfig(configPath, outputPath, format, githubToken, gitlabToken, tokenEnv, resolveThreads(), verbose, dryRun, keepTempDirs);
   }
 
   private int resolveThreads() {
@@ -79,22 +94,17 @@ public class AnalyzeCommand implements Runnable {
       return;
     }
 
-    final List<String> repos = List.of("Cloning user-service", "Cloning order-service", "Cloning auth-service");
+    final RepoSourceConfig repoSourceConfig = repoSourceConfigLoader.load(Path.of(config.configPath()));
+    final CredentialResolver credentialResolver = new CredentialResolver(config);
+    final List<RepoDefinition> repos = repoSourceConfig.repos();
 
-    multiProgressBar.start(repos);
+    multiProgressBar.start(repos.stream().map(RepoDefinition::repoName).toList());
+
+    final Map<String, Path> clonedDirectories = new ConcurrentHashMap<>();
 
     try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
       final List<? extends Future<?>> futures = repos.stream()
-          .map(repo -> executor.submit(() -> {
-            try {
-              // Simulamos trabajo con sleeps distintos
-              Thread.sleep(new Random().nextLong(1000, 10000));
-              multiProgressBar.done(repo);
-            } catch (InterruptedException e) {
-              Thread.currentThread().interrupt();
-              multiProgressBar.error(repo);
-            }
-          }))
+          .map(repo -> executor.submit(() -> cloneRepo(repo, credentialResolver, clonedDirectories)))
           .toList();
 
       for (Future<?> future : futures) {
@@ -105,5 +115,21 @@ public class AnalyzeCommand implements Runnable {
     }
 
     multiProgressBar.stop();
+
+    if (!config.keepTempDirs()) {
+      clonedDirectories.values().forEach(gitCloner::cleanup);
+    }
+  }
+
+  private void cloneRepo(final RepoDefinition repo, final CredentialResolver credentialResolver, final Map<String, Path> clonedDirectories) {
+    final String name = repo.repoName();
+    try {
+      final Optional<String> token = credentialResolver.resolve(repo.provider());
+      final Path clonedDir = gitCloner.clone(repo, token);
+      clonedDirectories.put(name, clonedDir);
+      multiProgressBar.done(name);
+    } catch (Exception e) {
+      multiProgressBar.error(name);
+    }
   }
 }
