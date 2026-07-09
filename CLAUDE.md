@@ -23,7 +23,7 @@ Tests: JUnit 5 + AssertJ + Mockito (via `spring-boot-starter-test`, ya heredado 
 - [x] #9 Core: arquitectura de analizadores extensible por lenguaje
 - [x] #10 Analyzers: detección de endpoints Java/Spring
 - [x] #11 Analyzers: detección de consumidores (Feign/RestTemplate/WebClient)
-- [ ] #12 Analyzers: extracción de versiones y dependencias por servicio
+- [x] #12 Analyzers: extracción de versiones y dependencias por servicio
 - [ ] #13 Core: motor de correlación y construcción del grafo de dependencias
 - [ ] #14 Reporter: reporte HTML con grafo visual de dependencias
 - [ ] #15 Application: orquestación real del caso de uso de análisis
