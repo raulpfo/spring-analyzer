@@ -20,7 +20,7 @@ Tests: JUnit 5 + AssertJ + Mockito (via `spring-boot-starter-test`, ya heredado 
 - [x] #6 Scaffolding: corregir estructura de paquetes en ui/application
 - [x] #7 Dominio: modelo de repos.yml y resolución segura de credenciales
 - [x] #8 SCM: clonado real de repositorios vía JGit
-- [ ] #9 Core: arquitectura de analizadores extensible por lenguaje
+- [x] #9 Core: arquitectura de analizadores extensible por lenguaje
 - [ ] #10 Analyzers: detección de endpoints Java/Spring
 - [ ] #11 Analyzers: detección de consumidores (Feign/RestTemplate/WebClient)
 - [ ] #12 Analyzers: extracción de versiones y dependencias por servicio
