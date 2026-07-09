@@ -73,6 +73,6 @@ class CredentialResolverTest {
   }
 
   private static CommandConfig commandConfig(final String githubToken, final String gitlabToken, final String tokenEnv) {
-    return new CommandConfig("repos.yml", "report.html", ReportFormat.HTML, githubToken, gitlabToken, tokenEnv, 1, false, false);
+    return new CommandConfig("repos.yml", "report.html", ReportFormat.HTML, githubToken, gitlabToken, tokenEnv, 1, false, false, false);
   }
 }
