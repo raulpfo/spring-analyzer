@@ -18,7 +18,9 @@ public class SpringAnalyzerApplication {
   @Bean
   public CommandLineRunner commandLineRunner(AnalyzeCommand analyzeCommand, IFactory factory) {
     return args -> {
-      int exitCode = new CommandLine(analyzeCommand, factory).execute(args);
+      int exitCode = new CommandLine(analyzeCommand, factory)
+          .setCaseInsensitiveEnumValuesAllowed(true)
+          .execute(args);
       System.exit(exitCode);
     };
   }
