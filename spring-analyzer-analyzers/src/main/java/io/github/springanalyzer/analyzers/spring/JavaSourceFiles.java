@@ -1,5 +1,7 @@
 package io.github.springanalyzer.analyzers.spring;
 
+import io.github.springanalyzer.analyzers.AnalysisException;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -17,7 +19,7 @@ final class JavaSourceFiles {
           .map(JavaSourceFiles::read)
           .toList();
     } catch (IOException e) {
-      throw new SpringAnalysisException("No se pudo recorrer el codigo fuente en " + sourceRoot, e);
+      throw new AnalysisException("No se pudo recorrer el codigo fuente en " + sourceRoot, e);
     }
   }
 
@@ -25,7 +27,7 @@ final class JavaSourceFiles {
     try {
       return Files.readString(file);
     } catch (IOException e) {
-      throw new SpringAnalysisException("No se pudo leer el fichero " + file, e);
+      throw new AnalysisException("No se pudo leer el fichero " + file, e);
     }
   }
 }
