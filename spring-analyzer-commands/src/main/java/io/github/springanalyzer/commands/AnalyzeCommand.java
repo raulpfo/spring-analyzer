@@ -1,11 +1,14 @@
 package io.github.springanalyzer.commands;
 
+import io.github.springanalyzer.domain.entities.CommandConfig;
+import io.github.springanalyzer.domain.entities.ReportFormat;
 import io.github.springanalyzer.domain.usecase.LaunchSpringAnalyzeUseCase;
 import io.github.springanalyzer.commands.ui.ProgressBar;
 import io.github.springanalyzer.commands.ui.MultiProgressBar;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Help.Visibility;
 import picocli.CommandLine.Option;
 
 import java.util.List;
@@ -32,16 +35,50 @@ public class AnalyzeCommand implements Runnable {
   @Option(names = {"-c", "--config"}, description = "Path to repos.yml config file", required = true)
   private String configPath;
 
-  @Option(names = {"-o", "--output"}, description = "Output file path (default: report.html)", defaultValue = "report.html")
+  @Option(names = {"-o", "--output"}, description = "Output file path", defaultValue = "report.html", showDefaultValue = Visibility.ALWAYS)
   private String outputPath;
 
-  /*public void run() {
-    progressBar.start("Cloning repositories...", null);
-    launchSpringAnalyzeUseCase.run(new CommandConfig(configPath, outputPath));
-    progressBar.stop("Analysis complete!");
-  }*/
+  @Option(names = {"--format"}, description = "Report format: ${COMPLETION-CANDIDATES}", defaultValue = "HTML", showDefaultValue = Visibility.ALWAYS)
+  private ReportFormat format;
+
+  @Option(names = {"--github-token"}, description = "GitHub token used to clone private repositories")
+  private String githubToken;
+
+  @Option(names = {"--gitlab-token"}, description = "GitLab token used to clone private repositories")
+  private String gitlabToken;
+
+  @Option(names = {"--token-env"}, description = "Name of the environment variable holding the SCM token, as an alternative to --github-token/--gitlab-token")
+  private String tokenEnv;
+
+  @Option(names = {"--threads"}, description = "Number of concurrent threads used to clone and analyze repositories (default: number of available processors)")
+  private int threads = -1;
+
+  @Option(names = {"-v", "--verbose"}, description = "Enable verbose output")
+  private boolean verbose;
+
+  @Option(names = {"--dry-run"}, description = "Print the resolved configuration without cloning or analyzing anything")
+  private boolean dryRun;
+
+  CommandConfig toCommandConfig() {
+    return new CommandConfig(configPath, outputPath, format, githubToken, gitlabToken, tokenEnv, resolveThreads(), verbose, dryRun);
+  }
+
+  private int resolveThreads() {
+    return threads > 0 ? threads : Runtime.getRuntime().availableProcessors();
+  }
+
   @Override
   public void run() {
+    final CommandConfig config = toCommandConfig();
+
+    if (verbose || dryRun) {
+      System.out.println("Configuration: " + config);
+    }
+
+    if (dryRun) {
+      return;
+    }
+
     final List<String> repos = List.of("Cloning user-service", "Cloning order-service", "Cloning auth-service");
 
     multiProgressBar.start(repos);
