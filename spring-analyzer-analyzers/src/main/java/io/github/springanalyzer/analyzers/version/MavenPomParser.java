@@ -1,5 +1,8 @@
 package io.github.springanalyzer.analyzers.version;
 
+import io.github.springanalyzer.core.analyzer.Dependency;
+import io.github.springanalyzer.core.analyzer.ServiceVersionInfo;
+
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;

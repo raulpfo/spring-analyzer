@@ -1,5 +1,8 @@
 package io.github.springanalyzer.analyzers.version;
 
+import io.github.springanalyzer.core.analyzer.Dependency;
+import io.github.springanalyzer.core.analyzer.ServiceVersionInfo;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 

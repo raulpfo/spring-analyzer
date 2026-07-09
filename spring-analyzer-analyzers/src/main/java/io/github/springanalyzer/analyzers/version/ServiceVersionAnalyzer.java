@@ -1,6 +1,7 @@
 package io.github.springanalyzer.analyzers.version;
 
 import io.github.springanalyzer.analyzers.AnalysisException;
+import io.github.springanalyzer.core.analyzer.ServiceVersionInfo;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;

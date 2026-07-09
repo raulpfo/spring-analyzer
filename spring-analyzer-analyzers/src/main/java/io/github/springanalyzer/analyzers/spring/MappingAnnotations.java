@@ -1,5 +1,7 @@
 package io.github.springanalyzer.analyzers.spring;
 
+import io.github.springanalyzer.core.analyzer.HttpMethod;
+
 import com.github.javaparser.ast.expr.AnnotationExpr;
 import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.ast.expr.NormalAnnotationExpr;

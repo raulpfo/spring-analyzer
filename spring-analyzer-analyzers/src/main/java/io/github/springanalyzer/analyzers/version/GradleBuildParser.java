@@ -1,5 +1,8 @@
 package io.github.springanalyzer.analyzers.version;
 
+import io.github.springanalyzer.core.analyzer.Dependency;
+import io.github.springanalyzer.core.analyzer.ServiceVersionInfo;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
