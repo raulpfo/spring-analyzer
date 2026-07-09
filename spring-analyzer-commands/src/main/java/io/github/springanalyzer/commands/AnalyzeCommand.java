@@ -8,6 +8,7 @@ import io.github.springanalyzer.commands.ui.MultiProgressBar;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Help.Visibility;
 import picocli.CommandLine.Option;
 
 import java.util.List;
@@ -34,10 +35,10 @@ public class AnalyzeCommand implements Runnable {
   @Option(names = {"-c", "--config"}, description = "Path to repos.yml config file", required = true)
   private String configPath;
 
-  @Option(names = {"-o", "--output"}, description = "Output file path", defaultValue = "report.html")
+  @Option(names = {"-o", "--output"}, description = "Output file path", defaultValue = "report.html", showDefaultValue = Visibility.ALWAYS)
   private String outputPath;
 
-  @Option(names = {"--format"}, description = "Report format: ${COMPLETION-CANDIDATES}", defaultValue = "HTML")
+  @Option(names = {"--format"}, description = "Report format: ${COMPLETION-CANDIDATES}", defaultValue = "HTML", showDefaultValue = Visibility.ALWAYS)
   private ReportFormat format;
 
   @Option(names = {"--github-token"}, description = "GitHub token used to clone private repositories")
