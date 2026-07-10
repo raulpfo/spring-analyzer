@@ -9,10 +9,10 @@ public record OutdatedVersion(String serviceName, String label, String currentVe
       throw new IllegalArgumentException("La etiqueta de la dependencia no puede estar vacia");
     }
     if (currentVersion == null || currentVersion.isBlank()) {
-      throw new IllegalArgumentException("La version actual no puede estar vacia");
+      throw new IllegalArgumentException("La version actual no puede estar en blanco");
     }
     if (latestVersion == null || latestVersion.isBlank()) {
-      throw new IllegalArgumentException("La ultima version no puede estar vacia");
+      throw new IllegalArgumentException("La ultima version no puede estar en blanco");
     }
   }
 }

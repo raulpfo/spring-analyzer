@@ -57,6 +57,26 @@ class VersionAnomalyDetectorTest {
   }
 
   @Test
+  void treatsAMissingNumericSegmentAsZero() {
+    final ServiceNode withPatch = node("order-service", "1.0.1", List.of());
+    final ServiceNode withoutPatch = node("user-service", "1.0", List.of());
+
+    final List<OutdatedVersion> anomalies = detector.detect(List.of(withPatch, withoutPatch));
+
+    assertThat(anomalies).containsExactly(new OutdatedVersion("user-service", "Spring Boot", "1.0", "1.0.1"));
+  }
+
+  @Test
+  void treatsAReleaseVersionAsNewerThanTheSameVersionWithAPreReleaseQualifier() {
+    final ServiceNode release = node("order-service", "3.4.0", List.of());
+    final ServiceNode snapshot = node("user-service", "3.4.0-SNAPSHOT", List.of());
+
+    final List<OutdatedVersion> anomalies = detector.detect(List.of(release, snapshot));
+
+    assertThat(anomalies).containsExactly(new OutdatedVersion("user-service", "Spring Boot", "3.4.0-SNAPSHOT", "3.4.0"));
+  }
+
+  @Test
   void flagsAServiceWithAnOutdatedDependencyVersionIndependentlyPerArtifact() {
     final ServiceNode upToDate = node("order-service", null,
         List.of(new Dependency("org.apache.commons", "commons-lang3", "3.14.0")));

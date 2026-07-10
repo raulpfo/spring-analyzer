@@ -25,6 +25,10 @@ public class MermaidGraphRenderer {
   }
 
   private static String escape(final String text) {
-    return text.replace("\"", "&quot;");
+    // "report.html" renderiza este texto con th:text, que ya aplica el escapado
+    // HTML estandar; aqui solo hace falta neutralizar la comilla para la propia
+    // sintaxis de Mermaid, usando su secuencia de escape "#quot;" (no la entidad
+    // HTML "&quot;", que quedaria doblemente escapada por Thymeleaf).
+    return text.replace("\"", "#quot;");
   }
 }

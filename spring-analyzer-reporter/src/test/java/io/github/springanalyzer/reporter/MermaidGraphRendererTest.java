@@ -51,10 +51,12 @@ class MermaidGraphRendererTest {
   }
 
   @Test
-  void escapesDoubleQuotesInLabelsToAvoidBreakingMermaidSyntax() {
+  void escapesDoubleQuotesInLabelsUsingMermaidsOwnEscapeSequence() {
     final DependencyGraph graph = new DependencyGraph(
         List.of(new ServiceNode("order\"service", ServiceVersionInfo.unknown())), List.of(), List.of(), List.of());
 
-    assertThat(renderer.render(graph)).isEqualTo("graph LR\n  order_service[\"order&quot;service\"]\n");
+    // "#quot;" es la secuencia de escape propia de Mermaid; usar la entidad HTML
+    // "&quot;" quedaria doblemente escapada al pasar por el th:text de la plantilla.
+    assertThat(renderer.render(graph)).isEqualTo("graph LR\n  order_service[\"order#quot;service\"]\n");
   }
 }

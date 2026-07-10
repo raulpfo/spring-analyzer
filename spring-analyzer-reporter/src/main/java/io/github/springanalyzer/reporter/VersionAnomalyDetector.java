@@ -72,11 +72,16 @@ public class VersionAnomalyDetector {
   }
 
   private static int comparePart(final String partA, final String partB) {
+    if (partA.isEmpty() != partB.isEmpty()) {
+      // Un segmento numerico ausente equivale a "0" (1.0 < 1.0.1), pero un
+      // cualificador ausente indica una version de lanzamiento, que precede a
+      // una version con cualificador de pre-lanzamiento (1.0.0 > 1.0.0-SNAPSHOT).
+      final String extra = partA.isEmpty() ? partB : partA;
+      final int missingIsLower = isNumeric(extra) ? -1 : 1;
+      return partA.isEmpty() ? missingIsLower : -missingIsLower;
+    }
     if (isNumeric(partA) && isNumeric(partB)) {
       return Integer.compare(Integer.parseInt(partA), Integer.parseInt(partB));
-    }
-    if (partA.isEmpty() != partB.isEmpty()) {
-      return partA.isEmpty() ? -1 : 1;
     }
     return partA.compareTo(partB);
   }
