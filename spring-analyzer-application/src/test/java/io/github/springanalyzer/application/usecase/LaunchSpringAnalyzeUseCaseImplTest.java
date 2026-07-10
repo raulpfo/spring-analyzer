@@ -190,9 +190,29 @@ class LaunchSpringAnalyzeUseCaseImplTest {
     final CommandConfig command =
         new CommandConfig("repos.yml", "report.md", ReportFormat.MD, null, null, null, 2, false, false, false);
 
-    assertThatThrownBy(() -> useCase.run(command)).isInstanceOf(UnsupportedOperationException.class);
+    assertThatThrownBy(() -> useCase.run(command)).isInstanceOf(UnsupportedReportFormatException.class);
 
     verifyNoInteractions(repoSourceConfigLoader, gitCloner, multiProgressBar, analyzerRegistry, serviceSnapshotBuilder,
         dependencyGraphBuilder, htmlReportGenerator);
+  }
+
+  @Test
+  void aFailureInEveryRepoStillBuildsAndWritesAnEmptyReport(@TempDir final Path tempDir) throws IOException {
+    final Path outputPath = tempDir.resolve("report.html");
+    when(repoSourceConfigLoader.load(any())).thenReturn(new RepoSourceConfig(List.of(orderService, userService)));
+    when(gitCloner.clone(orderService, Optional.empty())).thenThrow(new RuntimeException("clone failed"));
+    when(gitCloner.clone(userService, Optional.empty())).thenThrow(new RuntimeException("clone failed"));
+
+    final DependencyGraph graph = new DependencyGraph(List.of(), List.of(), List.of(), List.of());
+    when(dependencyGraphBuilder.build(List.of())).thenReturn(graph);
+    when(htmlReportGenerator.generate(graph)).thenReturn("<html>report</html>");
+
+    final String result = useCase.run(commandConfig(outputPath.toString(), false));
+
+    assertThat(Files.readString(outputPath)).isEqualTo("<html>report</html>");
+    assertThat(result).contains("2 repositorio(s)").contains("0 analizado(s)").contains("2 fallido(s)");
+    verify(multiProgressBar).error("order-service");
+    verify(multiProgressBar).error("user-service");
+    verify(gitCloner, never()).cleanup(any());
   }
 }

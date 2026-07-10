@@ -27,12 +27,11 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 @Component
 public class LaunchSpringAnalyzeUseCaseImpl implements LaunchSpringAnalyzeUseCase {
@@ -61,7 +60,7 @@ public class LaunchSpringAnalyzeUseCaseImpl implements LaunchSpringAnalyzeUseCas
   @Override
   public String run(final CommandConfig command) {
     if (command.format() != ReportFormat.HTML) {
-      throw new UnsupportedOperationException("El formato de reporte " + command.format() + " aun no esta soportado");
+      throw new UnsupportedReportFormatException(command.format());
     }
 
     final RepoSourceConfig repoSourceConfig = repoSourceConfigLoader.load(Path.of(command.configPath()));
@@ -76,11 +75,15 @@ public class LaunchSpringAnalyzeUseCaseImpl implements LaunchSpringAnalyzeUseCas
     final List<String> failedRepos = new CopyOnWriteArrayList<>();
 
     try (ExecutorService executor = Executors.newFixedThreadPool(command.threads())) {
-      final List<? extends Future<?>> futures = repos.stream()
-          .map(repo -> executor.submit(() -> processRepo(repo, credentialResolver, clonedDirectories, snapshots,
-              unsupportedRepos, failedRepos)))
+      final List<Callable<Void>> tasks = repos.stream()
+          .<Callable<Void>>map(repo -> () -> {
+            processRepo(repo, credentialResolver, clonedDirectories, snapshots, unsupportedRepos, failedRepos);
+            return null;
+          })
           .toList();
-      awaitAll(futures);
+      executor.invokeAll(tasks);
+    } catch (final InterruptedException e) {
+      Thread.currentThread().interrupt();
     }
 
     multiProgressBar.stop();
@@ -116,18 +119,6 @@ public class LaunchSpringAnalyzeUseCaseImpl implements LaunchSpringAnalyzeUseCas
     } catch (final Exception e) {
       failedRepos.add(repoName);
       multiProgressBar.error(repoName);
-    }
-  }
-
-  private void awaitAll(final List<? extends Future<?>> futures) {
-    for (final Future<?> future : futures) {
-      try {
-        future.get();
-      } catch (final InterruptedException e) {
-        Thread.currentThread().interrupt();
-      } catch (final ExecutionException e) {
-        throw new IllegalStateException("Error inesperado analizando un repositorio", e.getCause());
-      }
     }
   }
 
