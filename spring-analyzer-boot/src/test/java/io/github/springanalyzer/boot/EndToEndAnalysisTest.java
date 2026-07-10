@@ -288,10 +288,13 @@ class EndToEndAnalysisTest {
   }
 
   private void assertDependencyGraph(final Document report) {
-    final String mermaid = report.select("pre.mermaid").text();
-    assertThat(mermaid).contains("order_service").contains("user_service").contains("billing_service");
-    assertThat(mermaid).contains("order_service -->|\"GET /users/{id}\"| user_service");
-    assertThat(mermaid).contains("user_service -->|\"GET /orders/{id}\"| order_service");
+    final String graphData = report.select("#graph-data").first().data();
+    assertThat(graphData).contains("\"id\":\"order-service\"").contains("\"id\":\"user-service\"")
+        .contains("\"id\":\"billing-service\"");
+    assertThat(graphData).contains("\"from\":\"order-service\",\"to\":\"user-service\"")
+        .contains("\"label\":\"GET /users/{id}\"");
+    assertThat(graphData).contains("\"from\":\"user-service\",\"to\":\"order-service\"")
+        .contains("\"label\":\"GET /orders/{id}\"");
   }
 
   private void assertOrphanEndpoints(final Document report) {
