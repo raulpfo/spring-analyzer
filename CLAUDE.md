@@ -25,7 +25,7 @@ Tests: JUnit 5 + AssertJ + Mockito (via `spring-boot-starter-test`, ya heredado 
 - [x] #11 Analyzers: detección de consumidores (Feign/RestTemplate/WebClient)
 - [x] #12 Analyzers: extracción de versiones y dependencias por servicio
 - [x] #13 Core: motor de correlación y construcción del grafo de dependencias
-- [ ] #14 Reporter: reporte HTML con grafo visual de dependencias
+- [x] #14 Reporter: reporte HTML con grafo visual de dependencias
 - [ ] #15 Application: orquestación real del caso de uso de análisis
 - [ ] #16 Test de integración end-to-end del flujo completo
 
