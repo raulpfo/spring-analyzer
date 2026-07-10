@@ -262,9 +262,12 @@ class SpringJavaEndpointAnalyzerTest {
   @Test
   void parsesRecordDeclarationsRegardlessOfWhichThreadRunsTheParsing() throws InterruptedException {
     // StaticJavaParser.getParserConfiguration() esta respaldada por un ThreadLocal: si el nivel
-    // de lenguaje solo se configurase una vez (p.ej. en un bloque estatico), un hilo nuevo que
-    // nunca lo haya ejecutado veria la configuracion por defecto de JavaParser y fallaria al
-    // parsear sintaxis Java 14+ como los records.
+    // de lenguaje solo se configurase una vez (p.ej. en un bloque estatico), solo el hilo que
+    // ejecuta esa inicializacion quedaria bien configurado. Para que este test detecte esa
+    // regresion sin depender de que otro test haya "calentado" antes esa inicializacion en el
+    // hilo principal (lo que lo haria pasar incluso con el bug), forzamos aqui esa
+    // inicializacion en el hilo actual y comprobamos que un hilo nuevo, que nunca la ha
+    // ejecutado, tambien parsea correctamente sintaxis Java 14+ como los records.
     final String source = """
         package com.example;
 
@@ -279,6 +282,8 @@ class SpringJavaEndpointAnalyzerTest {
           public String get() { return ""; }
         }
         """;
+
+    analyzer.analyzeSource(source);
 
     final AtomicReference<List<Endpoint>> endpoints = new AtomicReference<>();
     final AtomicReference<Throwable> failure = new AtomicReference<>();
