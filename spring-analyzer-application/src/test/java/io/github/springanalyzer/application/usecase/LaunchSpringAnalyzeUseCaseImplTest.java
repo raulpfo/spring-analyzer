@@ -18,9 +18,13 @@ import io.github.springanalyzer.domain.entities.ScmProvider;
 import io.github.springanalyzer.reporter.HtmlReportGenerator;
 import io.github.springanalyzer.scm.git.GitCloner;
 import io.github.springanalyzer.ui.cli.MultiProgressBar;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -140,6 +144,35 @@ class LaunchSpringAnalyzeUseCaseImplTest {
     verify(multiProgressBar).done("user-service");
     verify(gitCloner).cleanup(userDir);
     verify(gitCloner, times(1)).cleanup(any());
+  }
+
+  @Test
+  void aFailedRepoLogsTheUnderlyingExceptionInsteadOfSilentlyDiscardingIt(@TempDir final Path tempDir)
+      throws IOException {
+    final Path outputPath = tempDir.resolve("report.html");
+    when(repoSourceConfigLoader.load(any())).thenReturn(new RepoSourceConfig(List.of(orderService)));
+    final RuntimeException cloneFailure = new RuntimeException("clone failed");
+    when(gitCloner.clone(orderService, Optional.empty())).thenThrow(cloneFailure);
+
+    final DependencyGraph graph = new DependencyGraph(List.of(), List.of(), List.of(), List.of());
+    when(dependencyGraphBuilder.build(List.of())).thenReturn(graph);
+    when(htmlReportGenerator.generate(graph)).thenReturn("<html>report</html>");
+
+    final Logger logger = (Logger) LoggerFactory.getLogger(LaunchSpringAnalyzeUseCaseImpl.class);
+    final ListAppender<ILoggingEvent> appender = new ListAppender<>();
+    appender.start();
+    logger.addAppender(appender);
+
+    try {
+      useCase.run(commandConfig(outputPath.toString(), false));
+    } finally {
+      logger.detachAppender(appender);
+    }
+
+    assertThat(appender.list).anySatisfy(event -> {
+      assertThat(event.getFormattedMessage()).contains("order-service");
+      assertThat(event.getThrowableProxy().getMessage()).isEqualTo("clone failed");
+    });
   }
 
   @Test

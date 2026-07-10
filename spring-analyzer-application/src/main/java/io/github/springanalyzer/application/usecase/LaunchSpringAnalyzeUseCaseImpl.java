@@ -17,6 +17,8 @@ import io.github.springanalyzer.domain.usecase.LaunchSpringAnalyzeUseCase;
 import io.github.springanalyzer.reporter.HtmlReportGenerator;
 import io.github.springanalyzer.scm.git.GitCloner;
 import io.github.springanalyzer.ui.cli.MultiProgressBar;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -35,6 +37,8 @@ import java.util.concurrent.Executors;
 
 @Component
 public class LaunchSpringAnalyzeUseCaseImpl implements LaunchSpringAnalyzeUseCase {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(LaunchSpringAnalyzeUseCaseImpl.class);
 
   private final RepoSourceConfigLoader repoSourceConfigLoader;
   private final GitCloner gitCloner;
@@ -117,6 +121,7 @@ public class LaunchSpringAnalyzeUseCaseImpl implements LaunchSpringAnalyzeUseCas
       }
       multiProgressBar.done(repoName);
     } catch (final Exception e) {
+      LOGGER.warn("No se pudo analizar el repositorio {}", repoName, e);
       failedRepos.add(repoName);
       multiProgressBar.error(repoName);
     }
