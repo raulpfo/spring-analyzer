@@ -4,16 +4,79 @@
   <meta charset="UTF-8"/>
   <title>Spring Analyzer - Reporte de dependencias</title>
   <style>
-    body { font-family: sans-serif; margin: 2rem; }
-    table { border-collapse: collapse; width: 100%; margin-bottom: 2rem; }
-    th, td { border: 1px solid #ccc; padding: 0.4rem 0.8rem; text-align: left; }
-    th { background-color: #f0f0f0; }
-    section { margin-bottom: 2rem; }
-    .anomaly-empty { color: #666; font-style: italic; }
-    #graph { width: 100%; height: 600px; border: 1px solid #ccc; }
-    #graph-legend { list-style: none; display: flex; flex-wrap: wrap; gap: 1rem; padding: 0; margin: 0.5rem 0 1rem; }
-    #graph-legend li { display: flex; align-items: center; gap: 0.4rem; }
-    #graph-legend .swatch { display: inline-block; width: 0.9rem; height: 0.9rem; border-radius: 2px; }
+    :root {
+      --bg: #f5f5f7;
+      --card-bg: #ffffff;
+      --border: rgba(0, 0, 0, 0.06);
+      --text: #1d1d1f;
+      --text-muted: #86868b;
+      --shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.05);
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, "SF Pro Display", "SF Pro Text", "Segoe UI", system-ui, Helvetica, Arial, sans-serif;
+      margin: 0;
+      padding: 3.5rem 4rem 5rem;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      max-width: 1200px;
+      margin-inline: auto;
+    }
+    h1 {
+      font-size: 2.1rem;
+      font-weight: 600;
+      margin: 0 0 3rem;
+      letter-spacing: -0.02em;
+    }
+    h2 {
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin: 0 0 1.5rem;
+      color: var(--text);
+      letter-spacing: -0.01em;
+    }
+    h3 {
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin: 2rem 0 0.9rem;
+      color: var(--text-muted);
+      letter-spacing: 0.01em;
+    }
+    section {
+      background: var(--card-bg);
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+      padding: 2.25rem 2.5rem;
+      margin: 0 0 1.5rem;
+    }
+    table { border-collapse: collapse; width: 100%; margin-bottom: 0.5rem; font-size: 0.92rem; }
+    th, td { padding: 0.8rem 1rem; text-align: left; }
+    th {
+      color: var(--text-muted);
+      font-weight: 500;
+      font-size: 0.78rem;
+      border-bottom: 1px solid var(--border);
+    }
+    td { border-bottom: 1px solid var(--border); }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover td { background: #fafafa; }
+    .anomaly-empty { color: var(--text-muted); margin: 0; }
+    #graph {
+      width: 100%;
+      height: 620px;
+      border-radius: 14px;
+      background: #fbfbfd;
+    }
+    #graph-legend { list-style: none; display: flex; flex-wrap: wrap; gap: 1.4rem; padding: 0; margin: 0 0 1.75rem; }
+    #graph-legend li {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+    }
+    #graph-legend .swatch { display: inline-block; width: 0.6rem; height: 0.6rem; border-radius: 50%; }
   </style>
 </head>
 <body>
@@ -22,12 +85,12 @@
 <section id="graph-section">
   <h2>Grafo de dependencias</h2>
   <ul id="graph-legend">
-    <li><span class="swatch" style="background:#97c2fc;border:1px solid #2b7ce9"></span> Servicio</li>
-    <li><span class="swatch" style="background:#ffcc80;border:1px solid #ef6c00"></span> Endpoint(s) huerfano(s)</li>
-    <li><span class="swatch" style="background:#ef9a9a;border:1px solid #c62828"></span> Version desactualizada</li>
-    <li><span class="swatch" style="background:#ce93d8;border:1px solid #6a1b9a"></span> Ambas anomalias</li>
-    <li><span class="swatch" style="background:#e0e0e0;border:1px solid #616161"></span> Destino no resuelto</li>
-    <li><span class="swatch" style="background:#e53935;border:1px solid #e53935"></span> Consumo sin destino</li>
+    <li><span class="swatch" style="background:#0071e3"></span> Servicio</li>
+    <li><span class="swatch" style="background:#ff9500"></span> Endpoint(s) huerfano(s)</li>
+    <li><span class="swatch" style="background:#ff3b30"></span> Version desactualizada</li>
+    <li><span class="swatch" style="background:#af52de"></span> Ambas anomalias</li>
+    <li><span class="swatch" style="background:#c7c7cc"></span> Destino no resuelto</li>
+    <li><span class="swatch" style="background:#ff3b30"></span> Consumo sin destino</li>
   </ul>
   <div id="graph"></div>
   <script type="application/json" id="graph-data" th:utext="${graphData}">{"nodes":[],"edges":[]}</script>
@@ -137,22 +200,39 @@
 
     var edges = new vis.DataSet(graphData.edges.map(function (edge) {
       return edge.type === 'orphan-consumption'
-          ? Object.assign({}, edge, {dashes: true, color: {color: '#e53935', highlight: '#e53935', hover: '#e53935'}})
+          ? Object.assign({}, edge, {dashes: true, color: {color: '#ff3b30', highlight: '#ff3b30', hover: '#ff3b30'}})
           : edge;
     }));
     var nodes = new vis.DataSet(graphData.nodes);
 
     var options = {
-      nodes: {shape: 'box', font: {size: 14}, opacity: 1},
-      edges: {arrows: 'to', font: {align: 'middle', size: 11}, color: {color: '#848484', highlight: '#2b7ce9'}},
-      groups: {
-        normal: {color: {background: '#97c2fc', border: '#2b7ce9'}},
-        orphan: {color: {background: '#ffcc80', border: '#ef6c00'}},
-        outdated: {color: {background: '#ef9a9a', border: '#c62828'}},
-        both: {color: {background: '#ce93d8', border: '#6a1b9a'}},
-        unknown: {shape: 'diamond', color: {background: '#e0e0e0', border: '#616161'}}
+      nodes: {
+        shape: 'box',
+        shapeProperties: {borderRadius: 10},
+        margin: {top: 11, right: 16, bottom: 11, left: 16},
+        font: {size: 13, face: '-apple-system, "SF Pro Text", Segoe UI, sans-serif', color: '#1d1d1f'},
+        borderWidth: 1.5,
+        shadow: {enabled: true, color: 'rgba(0,0,0,0.10)', size: 6, x: 0, y: 2}
       },
-      physics: {stabilization: true},
+      edges: {
+        arrows: {to: {enabled: true, scaleFactor: 0.5}},
+        font: {
+          align: 'top', size: 10.5, face: '-apple-system, "SF Pro Text", Segoe UI, sans-serif',
+          color: '#86868b', strokeWidth: 0, background: 'rgba(251,251,253,0.9)'
+        },
+        color: {color: '#d2d2d7', highlight: '#0071e3', hover: '#b0b0b6'},
+        smooth: {type: 'dynamic'},
+        selectionWidth: 1,
+        width: 1
+      },
+      groups: {
+        normal: {color: {background: '#eaf2fe', border: '#0071e3', highlight: {background: '#d8e9fd', border: '#0071e3'}}},
+        orphan: {color: {background: '#fff2e0', border: '#ff9500', highlight: {background: '#ffe5bf', border: '#ff9500'}}},
+        outdated: {color: {background: '#ffe9e8', border: '#ff3b30', highlight: {background: '#ffd4d1', border: '#ff3b30'}}},
+        both: {color: {background: '#f4e6fb', border: '#af52de', highlight: {background: '#e9cdf6', border: '#af52de'}}},
+        unknown: {shape: 'diamond', color: {background: '#f2f2f5', border: '#c7c7cc', highlight: {background: '#e5e5ea', border: '#c7c7cc'}}}
+      },
+      physics: {stabilization: {iterations: 300}, barnesHut: {springLength: 190, avoidOverlap: 0.6}},
       interaction: {hover: true, dragNodes: true, dragView: true, zoomView: true}
     };
 
