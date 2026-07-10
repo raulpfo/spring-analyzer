@@ -3,7 +3,6 @@ package io.github.springanalyzer.analyzers.spring;
 import io.github.springanalyzer.core.analyzer.EndpointConsumption;
 import io.github.springanalyzer.core.analyzer.HttpMethod;
 
-import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
@@ -51,7 +50,7 @@ public class SpringConsumerAnalyzer {
   }
 
   public List<EndpointConsumption> analyzeSource(final String javaSource) {
-    final CompilationUnit compilationUnit = StaticJavaParser.parse(javaSource);
+    final CompilationUnit compilationUnit = JavaParsers.parse(javaSource);
     final Map<String, String> variableTypes = variableTypesIn(compilationUnit);
 
     final Stream<EndpointConsumption> feignConsumptions =

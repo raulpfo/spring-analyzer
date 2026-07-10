@@ -3,7 +3,6 @@ package io.github.springanalyzer.analyzers.spring;
 import io.github.springanalyzer.core.analyzer.Endpoint;
 import io.github.springanalyzer.core.analyzer.HttpMethod;
 
-import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
@@ -24,7 +23,7 @@ public class SpringJavaEndpointAnalyzer {
   }
 
   public List<Endpoint> analyzeSource(final String javaSource) {
-    final CompilationUnit compilationUnit = StaticJavaParser.parse(javaSource);
+    final CompilationUnit compilationUnit = JavaParsers.parse(javaSource);
     return compilationUnit.findAll(ClassOrInterfaceDeclaration.class).stream()
         .filter(this::isController)
         .flatMap(this::endpointsOf)

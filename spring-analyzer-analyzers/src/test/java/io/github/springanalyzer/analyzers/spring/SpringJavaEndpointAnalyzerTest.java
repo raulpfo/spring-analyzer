@@ -232,4 +232,29 @@ class SpringJavaEndpointAnalyzerTest {
             tuple(HttpMethod.GET, "/users", "com.example.UserController"),
             tuple(HttpMethod.POST, "/orders", "com.example.OrderController"));
   }
+
+  @Test
+  void parsesControllersUsingModernJavaSyntaxLikePatternMatchingInstanceof() {
+    final String source = """
+        package com.example;
+
+        import org.springframework.web.bind.annotation.*;
+
+        @RestController
+        public class UserController {
+
+          @GetMapping("/users/{id}")
+          public String get(Object id) {
+            if (id instanceof String stringId) {
+              return stringId;
+            }
+            return String.valueOf(id);
+          }
+        }
+        """;
+
+    final List<Endpoint> endpoints = analyzer.analyzeSource(source);
+
+    assertThat(endpoints).containsExactly(new Endpoint(HttpMethod.GET, "/users/{id}", "com.example.UserController"));
+  }
 }
