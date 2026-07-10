@@ -161,12 +161,12 @@
     function focusOn(nodeId) {
       var connectedNodes = nodeId === null ? null : network.getConnectedNodes(nodeId).concat([nodeId]);
       var connectedEdges = nodeId === null ? null : network.getConnectedEdges(nodeId);
-      nodes.get().forEach(function (node) {
-        nodes.update({id: node.id, opacity: !connectedNodes || connectedNodes.indexOf(node.id) >= 0 ? 1 : 0.15});
-      });
-      edges.get().forEach(function (edge) {
-        edges.update({id: edge.id, width: !connectedEdges || connectedEdges.indexOf(edge.id) >= 0 ? 3 : 0.5});
-      });
+      nodes.update(nodes.get().map(function (node) {
+        return {id: node.id, opacity: !connectedNodes || connectedNodes.indexOf(node.id) >= 0 ? 1 : 0.15};
+      }));
+      edges.update(edges.get().map(function (edge) {
+        return {id: edge.id, width: !connectedEdges || connectedEdges.indexOf(edge.id) >= 0 ? 3 : 0.5};
+      }));
     }
 
     network.on('hoverNode', function (params) { focusOn(params.node); });
