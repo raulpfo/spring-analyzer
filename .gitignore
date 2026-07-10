@@ -39,3 +39,4 @@ tmp/
 *.md
 !README.md
 !CLAUDE.md
+!**/src/main/resources/templates/*.html

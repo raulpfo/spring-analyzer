@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Spring Analyzer - Reporte de dependencias</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <style>
+    body { font-family: sans-serif; margin: 2rem; }
+    table { border-collapse: collapse; width: 100%; margin-bottom: 2rem; }
+    th, td { border: 1px solid #ccc; padding: 0.4rem 0.8rem; text-align: left; }
+    th { background-color: #f0f0f0; }
+    section { margin-bottom: 2rem; }
+    .anomaly-empty { color: #666; font-style: italic; }
+  </style>
+</head>
+<body>
+<h1>Reporte de dependencias entre servicios</h1>
+
+<section id="graph-section">
+  <h2>Grafo de dependencias</h2>
+  <pre class="mermaid" th:text="${mermaidGraph}">graph LR</pre>
+</section>
+
+<section id="versions-section">
+  <h2>Versiones por servicio</h2>
+  <table id="versions-table">
+    <thead>
+    <tr>
+      <th>Servicio</th>
+      <th>Spring Boot</th>
+      <th>Java</th>
+      <th>Dependencias</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="node : ${nodes}">
+      <td th:text="${node.serviceName()}">servicio</td>
+      <td th:text="${node.versionInfo().springBootVersion()} ?: 'desconocida'">3.4.0</td>
+      <td th:text="${node.versionInfo().javaVersion()} ?: 'desconocida'">21</td>
+      <td>
+        <span th:each="dependency, iter : ${node.versionInfo().dependencies()}">
+          <span
+              th:text="${dependency.groupId()} + ':' + ${dependency.artifactId()} + ':' + ${dependency.version()}">groupId:artifactId:version</span><span
+            th:if="${!iter.last}">, </span>
+        </span>
+      </td>
+    </tr>
+    </tbody>
+  </table>
+</section>
+
+<section id="anomalies-section">
+  <h2>Anomalias detectadas</h2>
+
+  <h3>Endpoints huerfanos</h3>
+  <p class="anomaly-empty" th:if="${#lists.isEmpty(orphanEndpoints)}">No se han detectado endpoints huerfanos.</p>
+  <table th:unless="${#lists.isEmpty(orphanEndpoints)}" id="orphan-endpoints-table">
+    <thead>
+    <tr>
+      <th>Servicio</th>
+      <th>Metodo</th>
+      <th>Path</th>
+      <th>Propietario</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="orphan : ${orphanEndpoints}">
+      <td th:text="${orphan.serviceName()}">servicio</td>
+      <td th:text="${orphan.endpoint().method()}">GET</td>
+      <td th:text="${orphan.endpoint().path()}">/path</td>
+      <td th:text="${orphan.endpoint().owner()}">com.example.Controller</td>
+    </tr>
+    </tbody>
+  </table>
+
+  <h3>Consumidores sin destino</h3>
+  <p class="anomaly-empty" th:if="${#lists.isEmpty(orphanConsumptions)}">No se han detectado consumidores sin
+    destino.</p>
+  <table th:unless="${#lists.isEmpty(orphanConsumptions)}" id="orphan-consumptions-table">
+    <thead>
+    <tr>
+      <th>Servicio</th>
+      <th>Servicio destino</th>
+      <th>Metodo</th>
+      <th>Path</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="orphan : ${orphanConsumptions}">
+      <td th:text="${orphan.serviceName()}">servicio</td>
+      <td th:text="${orphan.consumption().targetService()} ?: 'desconocido'">servicio-destino</td>
+      <td th:text="${orphan.consumption().method()}">GET</td>
+      <td th:text="${orphan.consumption().path()}">/path</td>
+    </tr>
+    </tbody>
+  </table>
+
+  <h3>Versiones desactualizadas</h3>
+  <p class="anomaly-empty" th:if="${#lists.isEmpty(outdatedVersions)}">No se han detectado versiones
+    desactualizadas.</p>
+  <table th:unless="${#lists.isEmpty(outdatedVersions)}" id="outdated-versions-table">
+    <thead>
+    <tr>
+      <th>Servicio</th>
+      <th>Dependencia</th>
+      <th>Version actual</th>
+      <th>Ultima version detectada</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="outdated : ${outdatedVersions}">
+      <td th:text="${outdated.serviceName()}">servicio</td>
+      <td th:text="${outdated.label()}">Spring Boot</td>
+      <td th:text="${outdated.currentVersion()}">2.7.5</td>
+      <td th:text="${outdated.latestVersion()}">3.4.0</td>
+    </tr>
+    </tbody>
+  </table>
+</section>
+
+<script>
+  mermaid.initialize({startOnLoad: true});
+</script>
+</body>
+</html>
