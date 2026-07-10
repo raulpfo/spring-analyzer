@@ -44,14 +44,24 @@ class HtmlReportGeneratorTest {
   }
 
   @Test
-  void rendersTheMermaidGraphDefinitionWithNodesAndTheMatchedEdge() {
+  void rendersTheGraphDataWithNodesAndTheMatchedEdge() {
     final Document document = renderFixture();
 
-    final String mermaid = document.select("pre.mermaid").text();
-    assertThat(mermaid).contains("graph LR");
-    assertThat(mermaid).contains("order-service");
-    assertThat(mermaid).contains("user-service");
-    assertThat(mermaid).contains("GET /orders/{id}");
+    final String graphData = document.select("#graph-data").first().data();
+    assertThat(graphData).contains("\"id\":\"order-service\"");
+    assertThat(graphData).contains("\"id\":\"user-service\"");
+    assertThat(graphData).contains("\"from\":\"user-service\"");
+    assertThat(graphData).contains("\"to\":\"order-service\"");
+    assertThat(graphData).contains("\"label\":\"GET /orders/{id}\"");
+  }
+
+  @Test
+  void embedsTheVisNetworkLibraryInlineSoTheReportHasNoRuntimeNetworkDependency() {
+    final Document document = renderFixture();
+
+    final Elements scripts = document.select("script");
+    assertThat(scripts.stream().anyMatch(script -> script.data().contains("vis-network"))).isTrue();
+    assertThat(document.select("script[src]")).isEmpty();
   }
 
   @Test

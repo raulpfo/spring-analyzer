@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8"/>
   <title>Spring Analyzer - Reporte de dependencias</title>
-  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <style>
     body { font-family: sans-serif; margin: 2rem; }
     table { border-collapse: collapse; width: 100%; margin-bottom: 2rem; }
@@ -11,6 +10,10 @@
     th { background-color: #f0f0f0; }
     section { margin-bottom: 2rem; }
     .anomaly-empty { color: #666; font-style: italic; }
+    #graph { width: 100%; height: 600px; border: 1px solid #ccc; }
+    #graph-legend { list-style: none; display: flex; flex-wrap: wrap; gap: 1rem; padding: 0; margin: 0.5rem 0 1rem; }
+    #graph-legend li { display: flex; align-items: center; gap: 0.4rem; }
+    #graph-legend .swatch { display: inline-block; width: 0.9rem; height: 0.9rem; border-radius: 2px; }
   </style>
 </head>
 <body>
@@ -18,7 +21,16 @@
 
 <section id="graph-section">
   <h2>Grafo de dependencias</h2>
-  <pre class="mermaid" th:text="${mermaidGraph}">graph LR</pre>
+  <ul id="graph-legend">
+    <li><span class="swatch" style="background:#97c2fc;border:1px solid #2b7ce9"></span> Servicio</li>
+    <li><span class="swatch" style="background:#ffcc80;border:1px solid #ef6c00"></span> Endpoint(s) huerfano(s)</li>
+    <li><span class="swatch" style="background:#ef9a9a;border:1px solid #c62828"></span> Version desactualizada</li>
+    <li><span class="swatch" style="background:#ce93d8;border:1px solid #6a1b9a"></span> Ambas anomalias</li>
+    <li><span class="swatch" style="background:#e0e0e0;border:1px solid #616161"></span> Destino no resuelto</li>
+    <li><span class="swatch" style="background:#e53935;border:1px solid #e53935"></span> Consumo sin destino</li>
+  </ul>
+  <div id="graph"></div>
+  <script type="application/json" id="graph-data" th:utext="${graphData}">{"nodes":[],"edges":[]}</script>
 </section>
 
 <section id="versions-section">
@@ -118,8 +130,48 @@
   </table>
 </section>
 
+<script th:utext="${visNetworkJs}">/* vis-network embebido */</script>
 <script>
-  mermaid.initialize({startOnLoad: true});
+  (function () {
+    var graphData = JSON.parse(document.getElementById('graph-data').textContent);
+
+    var edges = new vis.DataSet(graphData.edges.map(function (edge) {
+      return edge.type === 'orphan-consumption'
+          ? Object.assign({}, edge, {dashes: true, color: {color: '#e53935', highlight: '#e53935', hover: '#e53935'}})
+          : edge;
+    }));
+    var nodes = new vis.DataSet(graphData.nodes);
+
+    var options = {
+      nodes: {shape: 'box', font: {size: 14}, opacity: 1},
+      edges: {arrows: 'to', font: {align: 'middle', size: 11}, color: {color: '#848484', highlight: '#2b7ce9'}},
+      groups: {
+        normal: {color: {background: '#97c2fc', border: '#2b7ce9'}},
+        orphan: {color: {background: '#ffcc80', border: '#ef6c00'}},
+        outdated: {color: {background: '#ef9a9a', border: '#c62828'}},
+        both: {color: {background: '#ce93d8', border: '#6a1b9a'}},
+        unknown: {shape: 'diamond', color: {background: '#e0e0e0', border: '#616161'}}
+      },
+      physics: {stabilization: true},
+      interaction: {hover: true, dragNodes: true, dragView: true, zoomView: true}
+    };
+
+    var network = new vis.Network(document.getElementById('graph'), {nodes: nodes, edges: edges}, options);
+
+    function focusOn(nodeId) {
+      var connectedNodes = nodeId === null ? null : network.getConnectedNodes(nodeId).concat([nodeId]);
+      var connectedEdges = nodeId === null ? null : network.getConnectedEdges(nodeId);
+      nodes.get().forEach(function (node) {
+        nodes.update({id: node.id, opacity: !connectedNodes || connectedNodes.indexOf(node.id) >= 0 ? 1 : 0.15});
+      });
+      edges.get().forEach(function (edge) {
+        edges.update({id: edge.id, width: !connectedEdges || connectedEdges.indexOf(edge.id) >= 0 ? 3 : 0.5});
+      });
+    }
+
+    network.on('hoverNode', function (params) { focusOn(params.node); });
+    network.on('blurNode', function () { focusOn(null); });
+  })();
 </script>
 </body>
 </html>
