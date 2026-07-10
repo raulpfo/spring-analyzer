@@ -6,17 +6,16 @@ import com.github.javaparser.ast.CompilationUnit;
 
 final class JavaParsers {
 
-  static {
-    // Sin esto, JavaParser usa su nivel de lenguaje por defecto, que rechaza sintaxis
-    // introducida en Java 14+ (pattern matching con instanceof, records, sealed classes...),
-    // habitual en codigo Spring Boot moderno.
-    StaticJavaParser.getParserConfiguration().setLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_21);
-  }
-
   private JavaParsers() {
   }
 
   static CompilationUnit parse(final String javaSource) {
+    // StaticJavaParser.getParserConfiguration() esta respaldada por un ThreadLocal interno de
+    // JavaParser: configurarla una unica vez (p.ej. en un bloque estatico) solo afecta al hilo
+    // que lo ejecuta. Como los repos se analizan en un pool de varios hilos, hay que fijar el
+    // nivel de lenguaje en cada llamada para que todos los hilos parseen sintaxis Java 14+
+    // (pattern matching con instanceof, records, sealed classes...), habitual en Spring Boot moderno.
+    StaticJavaParser.getParserConfiguration().setLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_21);
     return StaticJavaParser.parse(javaSource);
   }
 }

@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
@@ -256,5 +257,42 @@ class SpringJavaEndpointAnalyzerTest {
     final List<Endpoint> endpoints = analyzer.analyzeSource(source);
 
     assertThat(endpoints).containsExactly(new Endpoint(HttpMethod.GET, "/users/{id}", "com.example.UserController"));
+  }
+
+  @Test
+  void parsesRecordDeclarationsRegardlessOfWhichThreadRunsTheParsing() throws InterruptedException {
+    // StaticJavaParser.getParserConfiguration() esta respaldada por un ThreadLocal: si el nivel
+    // de lenguaje solo se configurase una vez (p.ej. en un bloque estatico), un hilo nuevo que
+    // nunca lo haya ejecutado veria la configuracion por defecto de JavaParser y fallaria al
+    // parsear sintaxis Java 14+ como los records.
+    final String source = """
+        package com.example;
+
+        import org.springframework.web.bind.annotation.*;
+
+        @RestController
+        public class UserController {
+
+          record UserId(String value) { }
+
+          @GetMapping("/users/{id}")
+          public String get() { return ""; }
+        }
+        """;
+
+    final AtomicReference<List<Endpoint>> endpoints = new AtomicReference<>();
+    final AtomicReference<Throwable> failure = new AtomicReference<>();
+    final Thread thread = new Thread(() -> {
+      try {
+        endpoints.set(analyzer.analyzeSource(source));
+      } catch (final Throwable t) {
+        failure.set(t);
+      }
+    });
+    thread.start();
+    thread.join();
+
+    assertThat(failure.get()).isNull();
+    assertThat(endpoints.get()).containsExactly(new Endpoint(HttpMethod.GET, "/users/{id}", "com.example.UserController"));
   }
 }
