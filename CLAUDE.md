@@ -26,7 +26,7 @@ Tests: JUnit 5 + AssertJ + Mockito (via `spring-boot-starter-test`, ya heredado 
 - [x] #12 Analyzers: extracción de versiones y dependencias por servicio
 - [x] #13 Core: motor de correlación y construcción del grafo de dependencias
 - [x] #14 Reporter: reporte HTML con grafo visual de dependencias
-- [ ] #15 Application: orquestación real del caso de uso de análisis
+- [x] #15 Application: orquestación real del caso de uso de análisis
 - [ ] #16 Test de integración end-to-end del flujo completo
 
 Actualiza esta lista (marca `[x]`) cada vez que un PR de un hito se mergea a `main`.
