@@ -30,20 +30,20 @@ public final class FixtureGitRepo {
         Files.writeString(filePath, file.getValue());
       }
     } catch (final IOException e) {
-      throw new UncheckedIOException("No se pudo escribir el fixture del repositorio en " + repoDir, e);
+      throw new UncheckedIOException("Could not write repository fixture at " + repoDir, e);
     }
   }
 
   private static void commitAll(final Path repoDir) {
-    try (Git git = Git.init().setDirectory(repoDir.toFile()).call()) {
+    try (Git git = Git.init().setDirectory(repoDir.toFile()).setInitialBranch("main").call()) {
       git.add().addFilepattern(".").call();
       git.commit()
-          .setMessage("fixture inicial")
+          .setMessage("initial fixture commit")
           .setAuthor("spring-analyzer-tests", "tests@spring-analyzer.local")
           .setSign(false)
           .call();
     } catch (final GitAPIException e) {
-      throw new IllegalStateException("No se pudo preparar el repositorio de fixture en " + repoDir, e);
+      throw new IllegalStateException("Could not prepare repository fixture at " + repoDir, e);
     }
   }
 }

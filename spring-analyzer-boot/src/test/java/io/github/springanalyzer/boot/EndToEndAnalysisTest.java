@@ -24,15 +24,24 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Ejecuta el flujo completo (comando CLI -> clonado -> analisis -> grafo -> reporte HTML) contra
- * repositorios de fixture locales, sin red ni credenciales reales.
+ * Runs the full flow (CLI command -> clone -> analysis -> graph -> HTML report) against local
+ * fixture repositories, with no network access and no real credentials.
  *
- * <p>Arranca el contexto desde {@link TestBootstrap} en vez de {@link SpringAnalyzerApplication}
- * para no disparar el {@code CommandLineRunner} de esta ultima: @SpringBootTest invoca los
- * CommandLineRunner registrados igual que un arranque real, y este ejecutaria picocli con los
- * argumentos del propio proceso de test (fallando el parseo y llamando a System.exit).
- * {@link SpringAnalyzerApplication} se excluye explicitamente del escaneo de componentes para
- * que su bean {@code commandLineRunner} nunca se registre en el contexto de test.
+ * <p>The fixture repos.yml sets {@code provider: github} explicitly for every entry: the fixture
+ * URLs are {@code file://} paths, and {@link io.github.springanalyzer.domain.entities.ScmProvider}
+ * can only infer a provider from a host name, so it cannot be auto-detected for a local path.
+ *
+ * <p>The {@code CredentialResolver} used inside the pipeline still falls back to the real
+ * {@code GITHUB_TOKEN} environment variable if it happens to be set (e.g. on a CI runner), since
+ * no {@code --github-token} flag is passed here. This is harmless: JGit's local file transport
+ * never invokes the credentials provider, so any such token is never read or transmitted.
+ *
+ * <p>Boots the context from {@link TestBootstrap} instead of {@link SpringAnalyzerApplication}
+ * to avoid triggering the latter's {@code CommandLineRunner}: @SpringBootTest invokes registered
+ * CommandLineRunner beans just like a real startup would, and that one would run picocli against
+ * the test process's own arguments (failing to parse them and calling System.exit).
+ * {@link SpringAnalyzerApplication} is explicitly excluded from component scanning so its
+ * {@code commandLineRunner} bean is never registered in the test context.
  */
 @SpringBootTest(classes = EndToEndAnalysisTest.TestBootstrap.class)
 class EndToEndAnalysisTest {
@@ -309,6 +318,6 @@ class EndToEndAnalysisTest {
 
   private static Element rowFor(final Elements rows, final String serviceName) {
     return rows.stream().filter(row -> row.select("td").get(0).text().equals(serviceName)).findFirst()
-        .orElseThrow(() -> new AssertionError("No hay fila para el servicio " + serviceName));
+        .orElseThrow(() -> new AssertionError("No row found for service " + serviceName));
   }
 }
