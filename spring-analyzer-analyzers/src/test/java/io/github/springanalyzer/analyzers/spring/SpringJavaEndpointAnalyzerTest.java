@@ -2,6 +2,7 @@ package io.github.springanalyzer.analyzers.spring;
 
 import io.github.springanalyzer.core.analyzer.Endpoint;
 import io.github.springanalyzer.core.analyzer.HttpMethod;
+import io.github.springanalyzer.domain.entities.CustomAnnotationsConfig;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -10,6 +11,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -195,6 +197,80 @@ class SpringJavaEndpointAnalyzerTest {
     final List<Endpoint> endpoints = analyzer.analyzeSource(source);
 
     assertThat(endpoints).containsExactly(new Endpoint(HttpMethod.GET, "/api/users", "com.example.UserController"));
+  }
+
+  @Test
+  void detectsEndpointsUsingCustomControllerAndMappingAnnotations() {
+    final String source = """
+        package com.example;
+
+        import com.acme.fwk.MiController;
+        import com.acme.fwk.MiGet;
+
+        @MiController
+        public class UserController {
+
+          @MiGet("/users/{id}")
+          public String get() { return ""; }
+        }
+        """;
+    final CustomAnnotationsConfig customAnnotations = new CustomAnnotationsConfig(
+        List.of("com.acme.fwk.MiController"), Map.of("GET", List.of("com.acme.fwk.MiGet")), List.of());
+
+    final List<Endpoint> endpoints = analyzer.analyzeSource(source, customAnnotations);
+
+    assertThat(endpoints)
+        .containsExactly(new Endpoint(HttpMethod.GET, "/users/{id}", "com.example.UserController"));
+  }
+
+  @Test
+  void mixesStandardAndCustomMappingAnnotationsOnTheSameController() {
+    final String source = """
+        package com.example;
+
+        import org.springframework.web.bind.annotation.*;
+        import com.acme.fwk.MiPost;
+
+        @RestController
+        public class UserController {
+
+          @GetMapping("/users")
+          public String list() { return ""; }
+
+          @MiPost("/users")
+          public String create() { return ""; }
+        }
+        """;
+    final CustomAnnotationsConfig customAnnotations =
+        new CustomAnnotationsConfig(List.of(), Map.of("POST", List.of("com.acme.fwk.MiPost")), List.of());
+
+    final List<Endpoint> endpoints = analyzer.analyzeSource(source, customAnnotations);
+
+    assertThat(endpoints).extracting(Endpoint::method, Endpoint::path, Endpoint::owner)
+        .containsExactlyInAnyOrder(
+            tuple(HttpMethod.GET, "/users", "com.example.UserController"),
+            tuple(HttpMethod.POST, "/users", "com.example.UserController"));
+  }
+
+  @Test
+  void ignoresCustomAnnotationsWhenNotDeclaredAsControllers() {
+    final String source = """
+        package com.example;
+
+        import com.acme.fwk.MiController;
+        import com.acme.fwk.MiGet;
+
+        @MiController
+        public class UserController {
+
+          @MiGet("/users/{id}")
+          public String get() { return ""; }
+        }
+        """;
+
+    final List<Endpoint> endpoints = analyzer.analyzeSource(source, CustomAnnotationsConfig.EMPTY);
+
+    assertThat(endpoints).isEmpty();
   }
 
   @Test

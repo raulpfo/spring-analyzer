@@ -1,5 +1,7 @@
 package io.github.springanalyzer.core.config;
 
+import io.github.springanalyzer.core.analyzer.HttpMethod;
+import io.github.springanalyzer.domain.entities.CustomAnnotationsConfig;
 import io.github.springanalyzer.domain.entities.RepoDefinition;
 import io.github.springanalyzer.domain.entities.RepoSourceConfig;
 import io.github.springanalyzer.domain.entities.ScmProvider;
@@ -11,6 +13,7 @@ import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -37,7 +40,69 @@ public class RepoSourceConfigLoader {
       repos.add(parseRepo(index, rawRepo));
       index++;
     }
-    return new RepoSourceConfig(repos);
+    final CustomAnnotationsConfig customAnnotations = parseCustomAnnotations(rootMap.get("customAnnotations"));
+    return new RepoSourceConfig(repos, customAnnotations);
+  }
+
+  private CustomAnnotationsConfig parseCustomAnnotations(final Object raw) {
+    if (raw == null) {
+      return CustomAnnotationsConfig.EMPTY;
+    }
+    if (!(raw instanceof Map<?, ?> rawMap)) {
+      throw new RepoSourceConfigException("'customAnnotations' debe ser un objeto");
+    }
+
+    final List<String> controllers = parseAnnotationNameList(rawMap.get("controllers"), "customAnnotations.controllers");
+    final List<String> consumers = parseAnnotationNameList(rawMap.get("consumers"), "customAnnotations.consumers");
+    final Map<String, List<String>> mappings = parseMappings(rawMap.get("mappings"));
+    return new CustomAnnotationsConfig(controllers, mappings, consumers);
+  }
+
+  private Map<String, List<String>> parseMappings(final Object raw) {
+    if (raw == null) {
+      return Map.of();
+    }
+    if (!(raw instanceof Map<?, ?> rawMap)) {
+      throw new RepoSourceConfigException("'customAnnotations.mappings' debe ser un objeto con verbos HTTP como claves");
+    }
+
+    final Map<String, List<String>> mappings = new LinkedHashMap<>();
+    for (final Map.Entry<?, ?> entry : rawMap.entrySet()) {
+      final String verb = resolveHttpVerb(entry.getKey());
+      mappings.put(verb, parseAnnotationNameList(entry.getValue(), "customAnnotations.mappings." + entry.getKey()));
+    }
+    return mappings;
+  }
+
+  private String resolveHttpVerb(final Object rawVerb) {
+    if (!(rawVerb instanceof String verb) || verb.isBlank()) {
+      throw new RepoSourceConfigException("Las claves de 'customAnnotations.mappings' deben ser texto");
+    }
+    try {
+      return HttpMethod.valueOf(verb.trim().toUpperCase()).name();
+    } catch (IllegalArgumentException e) {
+      throw new RepoSourceConfigException(
+          "Verbo HTTP desconocido '" + verb + "' en 'customAnnotations.mappings'. "
+              + "Valores validos: GET, POST, PUT, DELETE, REQUEST");
+    }
+  }
+
+  private List<String> parseAnnotationNameList(final Object raw, final String fieldPath) {
+    if (raw == null) {
+      return List.of();
+    }
+    if (!(raw instanceof List<?> rawList)) {
+      throw new RepoSourceConfigException("'" + fieldPath + "' debe ser una lista de nombres de anotacion");
+    }
+
+    final List<String> names = new ArrayList<>();
+    for (final Object rawName : rawList) {
+      if (!(rawName instanceof String name) || name.isBlank()) {
+        throw new RepoSourceConfigException("'" + fieldPath + "' contiene un nombre de anotacion invalido o vacio");
+      }
+      names.add(name.trim());
+    }
+    return names;
   }
 
   private RepoDefinition parseRepo(final int index, final Object rawRepo) {

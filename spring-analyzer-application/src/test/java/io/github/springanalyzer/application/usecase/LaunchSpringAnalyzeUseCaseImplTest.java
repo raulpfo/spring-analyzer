@@ -11,6 +11,7 @@ import io.github.springanalyzer.core.analyzer.ServiceSnapshot;
 import io.github.springanalyzer.core.analyzer.ServiceVersionInfo;
 import io.github.springanalyzer.core.config.RepoSourceConfigLoader;
 import io.github.springanalyzer.domain.entities.CommandConfig;
+import io.github.springanalyzer.domain.entities.CustomAnnotationsConfig;
 import io.github.springanalyzer.domain.entities.RepoDefinition;
 import io.github.springanalyzer.domain.entities.RepoSourceConfig;
 import io.github.springanalyzer.domain.entities.ReportFormat;
@@ -30,6 +31,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -97,8 +99,8 @@ class LaunchSpringAnalyzeUseCaseImplTest {
         new ServiceSnapshot("order-service", List.of(), List.of(), ServiceVersionInfo.unknown());
     final ServiceSnapshot userSnapshot =
         new ServiceSnapshot("user-service", List.of(), List.of(), ServiceVersionInfo.unknown());
-    when(serviceSnapshotBuilder.build(orderContext)).thenReturn(orderSnapshot);
-    when(serviceSnapshotBuilder.build(userContext)).thenReturn(userSnapshot);
+    when(serviceSnapshotBuilder.build(orderContext, CustomAnnotationsConfig.EMPTY)).thenReturn(orderSnapshot);
+    when(serviceSnapshotBuilder.build(userContext, CustomAnnotationsConfig.EMPTY)).thenReturn(userSnapshot);
 
     final DependencyGraph graph = new DependencyGraph(List.of(), List.of(), List.of(), List.of());
     when(dependencyGraphBuilder.build(anyList())).thenReturn(graph);
@@ -118,6 +120,34 @@ class LaunchSpringAnalyzeUseCaseImplTest {
   }
 
   @Test
+  void passesTheCustomAnnotationsConfigFromReposYmlToTheSnapshotBuilder(@TempDir final Path tempDir)
+      throws IOException {
+    final Path outputPath = tempDir.resolve("report.html");
+    final CustomAnnotationsConfig customAnnotations =
+        new CustomAnnotationsConfig(List.of("com.acme.fwk.MiController"), Map.of(), List.of());
+    when(repoSourceConfigLoader.load(any()))
+        .thenReturn(new RepoSourceConfig(List.of(orderService), customAnnotations));
+
+    final Path orderDir = tempDir.resolve("order-clone");
+    when(gitCloner.clone(orderService, Optional.empty())).thenReturn(orderDir);
+
+    final RepoContext orderContext = new RepoContext("order-service", orderDir);
+    when(analyzerRegistry.dispatch(orderContext))
+        .thenReturn(new AnalysisOutcome.Analyzed(new ServiceAnalysisResult("order-service", "java")));
+    final ServiceSnapshot orderSnapshot =
+        new ServiceSnapshot("order-service", List.of(), List.of(), ServiceVersionInfo.unknown());
+    when(serviceSnapshotBuilder.build(orderContext, customAnnotations)).thenReturn(orderSnapshot);
+
+    final DependencyGraph graph = new DependencyGraph(List.of(), List.of(), List.of(), List.of());
+    when(dependencyGraphBuilder.build(List.of(orderSnapshot))).thenReturn(graph);
+    when(htmlReportGenerator.generate(graph)).thenReturn("<html>report</html>");
+
+    useCase.run(commandConfig(outputPath.toString(), false));
+
+    verify(serviceSnapshotBuilder).build(orderContext, customAnnotations);
+  }
+
+  @Test
   void aFailedCloneDoesNotAbortTheAnalysisOfOtherRepos(@TempDir final Path tempDir) throws IOException {
     final Path outputPath = tempDir.resolve("report.html");
     when(repoSourceConfigLoader.load(any())).thenReturn(new RepoSourceConfig(List.of(orderService, userService)));
@@ -131,7 +161,7 @@ class LaunchSpringAnalyzeUseCaseImplTest {
         .thenReturn(new AnalysisOutcome.Analyzed(new ServiceAnalysisResult("user-service", "java")));
     final ServiceSnapshot userSnapshot =
         new ServiceSnapshot("user-service", List.of(), List.of(), ServiceVersionInfo.unknown());
-    when(serviceSnapshotBuilder.build(userContext)).thenReturn(userSnapshot);
+    when(serviceSnapshotBuilder.build(userContext, CustomAnnotationsConfig.EMPTY)).thenReturn(userSnapshot);
 
     final DependencyGraph graph = new DependencyGraph(List.of(), List.of(), List.of(), List.of());
     when(dependencyGraphBuilder.build(List.of(userSnapshot))).thenReturn(graph);

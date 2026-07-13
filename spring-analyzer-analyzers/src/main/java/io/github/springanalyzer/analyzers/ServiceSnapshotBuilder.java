@@ -8,6 +8,7 @@ import io.github.springanalyzer.core.analyzer.EndpointConsumption;
 import io.github.springanalyzer.core.analyzer.RepoContext;
 import io.github.springanalyzer.core.analyzer.ServiceSnapshot;
 import io.github.springanalyzer.core.analyzer.ServiceVersionInfo;
+import io.github.springanalyzer.domain.entities.CustomAnnotationsConfig;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -27,8 +28,12 @@ public class ServiceSnapshotBuilder {
   }
 
   public ServiceSnapshot build(final RepoContext context) {
-    final List<Endpoint> endpoints = endpointAnalyzer.analyze(context.localPath());
-    final List<EndpointConsumption> consumptions = consumerAnalyzer.analyze(context.localPath());
+    return build(context, CustomAnnotationsConfig.EMPTY);
+  }
+
+  public ServiceSnapshot build(final RepoContext context, final CustomAnnotationsConfig customAnnotations) {
+    final List<Endpoint> endpoints = endpointAnalyzer.analyze(context.localPath(), customAnnotations);
+    final List<EndpointConsumption> consumptions = consumerAnalyzer.analyze(context.localPath(), customAnnotations);
     final ServiceVersionInfo versionInfo = versionAnalyzer.analyze(context.localPath());
     return new ServiceSnapshot(context.repoName(), endpoints, consumptions, versionInfo);
   }

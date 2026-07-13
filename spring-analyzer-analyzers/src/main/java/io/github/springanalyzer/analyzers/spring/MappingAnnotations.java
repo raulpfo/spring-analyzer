@@ -1,6 +1,7 @@
 package io.github.springanalyzer.analyzers.spring;
 
 import io.github.springanalyzer.core.analyzer.HttpMethod;
+import io.github.springanalyzer.domain.entities.CustomAnnotationsConfig;
 
 import com.github.javaparser.ast.expr.AnnotationExpr;
 import com.github.javaparser.ast.expr.Expression;
@@ -23,6 +24,22 @@ final class MappingAnnotations {
       case "RequestMapping" -> Optional.of(HttpMethod.REQUEST);
       default -> Optional.empty();
     };
+  }
+
+  static Optional<HttpMethod> httpMethodOf(final String annotationName, final CustomAnnotationsConfig customAnnotations) {
+    final Optional<HttpMethod> standard = httpMethodOf(annotationName);
+    if (standard.isPresent()) {
+      return standard;
+    }
+    return customAnnotations.mappings().entrySet().stream()
+        .filter(entry -> entry.getValue().stream().anyMatch(name -> simpleNameOf(name).equals(annotationName)))
+        .map(entry -> HttpMethod.valueOf(entry.getKey()))
+        .findFirst();
+  }
+
+  static String simpleNameOf(final String annotationName) {
+    final int lastDot = annotationName.lastIndexOf('.');
+    return lastDot >= 0 ? annotationName.substring(lastDot + 1) : annotationName;
   }
 
   static Optional<String> pathOf(final AnnotationExpr annotation) {
