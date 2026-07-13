@@ -74,6 +74,24 @@ Cada entrada admite:
 | `branch` | No | Rama a analizar. Si se omite, se usa la rama por defecto del repositorio. |
 | `provider` | No | `github` o `gitlab`. Si se omite, se infiere del *host* de la `url` (`github.com` / `gitlab.com`). Es **obligatorio** especificarlo explícitamente si la URL no permite inferirlo (por ejemplo, un GitHub/GitLab autoalojado con dominio propio). |
 
+### 1.1. (Opcional) Anotaciones custom para frameworks propios
+
+Si tu organización tiene un framework interno construido encima de Spring que envuelve `@RestController`/`@GetMapping`/`@FeignClient` con anotaciones propias, puedes declararlas de forma global en `repos.yml` para que también se detecten (además de las estándar de Spring, que siguen funcionando igual):
+
+```yaml
+customAnnotations:
+  controllers: [com.acme.fwk.MiController]        # equivalente a @RestController/@Controller
+  mappings:
+    GET: [com.acme.fwk.MiGet]
+    POST: [com.acme.fwk.MiPost]
+  consumers: [com.acme.fwk.MiFeignClient]          # equivalente a @FeignClient
+
+repos:
+  - url: https://github.com/tu-org/order-service.git
+```
+
+Los nombres admiten FQN o nombre simple (se comparan por nombre simple de la anotación, igual que las estándar). Los verbos válidos en `mappings` son `GET`, `POST`, `PUT`, `DELETE` y `REQUEST` (equivalente a `@RequestMapping` sin verbo explícito).
+
 ### 2. (Opcional) Configura credenciales si algún repo es privado
 
 `spring-analyzer` nunca lee tokens desde `repos.yml` en texto plano. La resolución de credenciales sigue esta prioridad, por proveedor (`github`/`gitlab`):

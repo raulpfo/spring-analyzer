@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -40,5 +41,29 @@ class RepoSourceConfigTest {
     mutableRepos.clear();
 
     assertThat(config.repos()).containsExactly(SAMPLE_REPO);
+  }
+
+  @Test
+  void defaultsCustomAnnotationsToEmptyWhenNotProvided() {
+    final RepoSourceConfig config = new RepoSourceConfig(List.of(SAMPLE_REPO));
+
+    assertThat(config.customAnnotations()).isEqualTo(CustomAnnotationsConfig.EMPTY);
+  }
+
+  @Test
+  void keepsTheGivenCustomAnnotationsConfig() {
+    final CustomAnnotationsConfig customAnnotations =
+        new CustomAnnotationsConfig(List.of("com.acme.fwk.MiController"), Map.of(), List.of());
+
+    final RepoSourceConfig config = new RepoSourceConfig(List.of(SAMPLE_REPO), customAnnotations);
+
+    assertThat(config.customAnnotations()).isEqualTo(customAnnotations);
+  }
+
+  @Test
+  void treatsNullCustomAnnotationsAsEmpty() {
+    final RepoSourceConfig config = new RepoSourceConfig(List.of(SAMPLE_REPO), null);
+
+    assertThat(config.customAnnotations()).isEqualTo(CustomAnnotationsConfig.EMPTY);
   }
 }

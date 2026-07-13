@@ -2,6 +2,7 @@ package io.github.springanalyzer.analyzers.spring;
 
 import io.github.springanalyzer.core.analyzer.EndpointConsumption;
 import io.github.springanalyzer.core.analyzer.HttpMethod;
+import io.github.springanalyzer.domain.entities.CustomAnnotationsConfig;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -10,6 +11,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
@@ -87,6 +89,50 @@ class SpringConsumerAnalyzerTest {
     final List<EndpointConsumption> consumptions = analyzer.analyzeSource(source);
 
     assertThat(consumptions).containsExactly(new EndpointConsumption(null, "/orders", HttpMethod.GET));
+  }
+
+  @Test
+  void detectsConsumerUsingACustomAnnotationEquivalentToFeignClient() {
+    final String source = """
+        package com.example;
+
+        import com.acme.fwk.MiFeignClient;
+        import org.springframework.web.bind.annotation.*;
+
+        @MiFeignClient(name = "order-service")
+        public interface OrderClient {
+
+          @GetMapping("/orders")
+          String list();
+        }
+        """;
+    final CustomAnnotationsConfig customAnnotations =
+        new CustomAnnotationsConfig(List.of(), Map.of(), List.of("com.acme.fwk.MiFeignClient"));
+
+    final List<EndpointConsumption> consumptions = analyzer.analyzeSource(source, customAnnotations);
+
+    assertThat(consumptions).containsExactly(new EndpointConsumption("order-service", "/orders", HttpMethod.GET));
+  }
+
+  @Test
+  void ignoresCustomConsumerAnnotationsWhenNotDeclaredAsConsumers() {
+    final String source = """
+        package com.example;
+
+        import com.acme.fwk.MiFeignClient;
+        import org.springframework.web.bind.annotation.*;
+
+        @MiFeignClient(name = "order-service")
+        public interface OrderClient {
+
+          @GetMapping("/orders")
+          String list();
+        }
+        """;
+
+    final List<EndpointConsumption> consumptions = analyzer.analyzeSource(source, CustomAnnotationsConfig.EMPTY);
+
+    assertThat(consumptions).isEmpty();
   }
 
   @Test

@@ -9,12 +9,14 @@ import io.github.springanalyzer.core.analyzer.HttpMethod;
 import io.github.springanalyzer.core.analyzer.RepoContext;
 import io.github.springanalyzer.core.analyzer.ServiceSnapshot;
 import io.github.springanalyzer.core.analyzer.ServiceVersionInfo;
+import io.github.springanalyzer.domain.entities.CustomAnnotationsConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -45,6 +47,22 @@ class ServiceSnapshotBuilderTest {
     when(versionAnalyzer.analyze(repoDir)).thenReturn(versionInfo);
 
     final ServiceSnapshot snapshot = builder.build(new RepoContext("order-service", repoDir));
+
+    assertThat(snapshot).isEqualTo(new ServiceSnapshot("order-service", endpoints, consumptions, versionInfo));
+  }
+
+  @Test
+  void passesTheCustomAnnotationsConfigToTheEndpointAndConsumerAnalyzers(@TempDir final Path repoDir) {
+    final CustomAnnotationsConfig customAnnotations =
+        new CustomAnnotationsConfig(List.of("com.acme.fwk.MiController"), Map.of(), List.of());
+    final List<Endpoint> endpoints = List.of(new Endpoint(HttpMethod.GET, "/orders/{id}", "com.example.OrderController"));
+    final List<EndpointConsumption> consumptions = List.of(new EndpointConsumption("user-service", "/users/{id}", HttpMethod.GET));
+    final ServiceVersionInfo versionInfo = new ServiceVersionInfo("3.4.0", "21", List.of());
+    when(endpointAnalyzer.analyze(repoDir, customAnnotations)).thenReturn(endpoints);
+    when(consumerAnalyzer.analyze(repoDir, customAnnotations)).thenReturn(consumptions);
+    when(versionAnalyzer.analyze(repoDir)).thenReturn(versionInfo);
+
+    final ServiceSnapshot snapshot = builder.build(new RepoContext("order-service", repoDir), customAnnotations);
 
     assertThat(snapshot).isEqualTo(new ServiceSnapshot("order-service", endpoints, consumptions, versionInfo));
   }

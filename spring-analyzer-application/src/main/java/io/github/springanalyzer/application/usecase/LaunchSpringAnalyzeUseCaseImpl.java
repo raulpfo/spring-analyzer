@@ -10,6 +10,7 @@ import io.github.springanalyzer.core.analyzer.ServiceSnapshot;
 import io.github.springanalyzer.core.config.RepoSourceConfigLoader;
 import io.github.springanalyzer.domain.credentials.CredentialResolver;
 import io.github.springanalyzer.domain.entities.CommandConfig;
+import io.github.springanalyzer.domain.entities.CustomAnnotationsConfig;
 import io.github.springanalyzer.domain.entities.RepoDefinition;
 import io.github.springanalyzer.domain.entities.RepoSourceConfig;
 import io.github.springanalyzer.domain.entities.ReportFormat;
@@ -70,6 +71,7 @@ public class LaunchSpringAnalyzeUseCaseImpl implements LaunchSpringAnalyzeUseCas
     final RepoSourceConfig repoSourceConfig = repoSourceConfigLoader.load(Path.of(command.configPath()));
     final CredentialResolver credentialResolver = new CredentialResolver(command);
     final List<RepoDefinition> repos = repoSourceConfig.repos();
+    final CustomAnnotationsConfig customAnnotations = repoSourceConfig.customAnnotations();
 
     multiProgressBar.start(repos.stream().map(RepoDefinition::repoName).toList());
 
@@ -81,7 +83,8 @@ public class LaunchSpringAnalyzeUseCaseImpl implements LaunchSpringAnalyzeUseCas
     try (ExecutorService executor = Executors.newFixedThreadPool(command.threads())) {
       final List<Callable<Void>> tasks = repos.stream()
           .<Callable<Void>>map(repo -> () -> {
-            processRepo(repo, credentialResolver, clonedDirectories, snapshots, unsupportedRepos, failedRepos);
+            processRepo(repo, credentialResolver, customAnnotations, clonedDirectories, snapshots, unsupportedRepos,
+                failedRepos);
             return null;
           })
           .toList();
@@ -104,8 +107,8 @@ public class LaunchSpringAnalyzeUseCaseImpl implements LaunchSpringAnalyzeUseCas
   }
 
   private void processRepo(final RepoDefinition repo, final CredentialResolver credentialResolver,
-      final Map<String, Path> clonedDirectories, final List<ServiceSnapshot> snapshots,
-      final List<String> unsupportedRepos, final List<String> failedRepos) {
+      final CustomAnnotationsConfig customAnnotations, final Map<String, Path> clonedDirectories,
+      final List<ServiceSnapshot> snapshots, final List<String> unsupportedRepos, final List<String> failedRepos) {
     final String repoName = repo.repoName();
     try {
       final Optional<String> token = credentialResolver.resolve(repo.provider());
@@ -115,7 +118,7 @@ public class LaunchSpringAnalyzeUseCaseImpl implements LaunchSpringAnalyzeUseCas
       final RepoContext context = new RepoContext(repoName, clonedDir);
       final AnalysisOutcome outcome = analyzerRegistry.dispatch(context);
       if (outcome instanceof AnalysisOutcome.Analyzed) {
-        snapshots.add(serviceSnapshotBuilder.build(context));
+        snapshots.add(serviceSnapshotBuilder.build(context, customAnnotations));
       } else {
         unsupportedRepos.add(repoName);
       }

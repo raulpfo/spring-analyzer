@@ -2,6 +2,7 @@ package io.github.springanalyzer.analyzers.spring;
 
 import io.github.springanalyzer.core.analyzer.EndpointConsumption;
 import io.github.springanalyzer.core.analyzer.HttpMethod;
+import io.github.springanalyzer.domain.entities.CustomAnnotationsConfig;
 
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.Node;
@@ -44,36 +45,52 @@ public class SpringConsumerAnalyzer {
       "delete", HttpMethod.DELETE);
 
   public List<EndpointConsumption> analyze(final Path sourceRoot) {
+    return analyze(sourceRoot, CustomAnnotationsConfig.EMPTY);
+  }
+
+  public List<EndpointConsumption> analyze(final Path sourceRoot, final CustomAnnotationsConfig customAnnotations) {
     return JavaSourceFiles.readAllUnder(sourceRoot).stream()
-        .flatMap(source -> analyzeSource(source).stream())
+        .flatMap(source -> analyzeSource(source, customAnnotations).stream())
         .toList();
   }
 
   public List<EndpointConsumption> analyzeSource(final String javaSource) {
+    return analyzeSource(javaSource, CustomAnnotationsConfig.EMPTY);
+  }
+
+  public List<EndpointConsumption> analyzeSource(final String javaSource, final CustomAnnotationsConfig customAnnotations) {
     final CompilationUnit compilationUnit = JavaParsers.parse(javaSource);
     final Map<String, String> variableTypes = variableTypesIn(compilationUnit);
 
-    final Stream<EndpointConsumption> feignConsumptions =
-        compilationUnit.findAll(ClassOrInterfaceDeclaration.class).stream().flatMap(this::feignConsumptionsOf);
+    final Stream<EndpointConsumption> feignConsumptions = compilationUnit.findAll(ClassOrInterfaceDeclaration.class)
+        .stream()
+        .flatMap(typeDeclaration -> feignConsumptionsOf(typeDeclaration, customAnnotations));
     return Stream.concat(feignConsumptions,
             Stream.concat(restTemplateConsumptionsOf(compilationUnit, variableTypes),
                 webClientConsumptionsOf(compilationUnit, variableTypes)))
         .toList();
   }
 
-  private Stream<EndpointConsumption> feignConsumptionsOf(final ClassOrInterfaceDeclaration typeDeclaration) {
-    return typeDeclaration.getAnnotationByName("FeignClient")
-        .map(feignAnnotation -> {
-          final String targetService = feignServiceNameOf(feignAnnotation).orElse(null);
+  private Stream<EndpointConsumption> feignConsumptionsOf(final ClassOrInterfaceDeclaration typeDeclaration,
+      final CustomAnnotationsConfig customAnnotations) {
+    final Optional<AnnotationExpr> feignAnnotation = typeDeclaration.getAnnotationByName("FeignClient")
+        .or(() -> customAnnotations.consumers().stream()
+            .flatMap(name -> typeDeclaration.getAnnotationByName(MappingAnnotations.simpleNameOf(name)).stream())
+            .findFirst());
+
+    return feignAnnotation.map(annotation -> {
+          final String targetService = feignServiceNameOf(annotation).orElse(null);
           final String classPath = typeDeclaration.getAnnotationByName("RequestMapping")
               .flatMap(MappingAnnotations::pathOf)
               .orElse("");
 
           return typeDeclaration.getMethods().stream()
               .flatMap(method -> method.getAnnotations().stream()
-                  .flatMap(annotation -> MappingAnnotations.httpMethodOf(annotation.getNameAsString())
+                  .flatMap(methodAnnotation -> MappingAnnotations
+                      .httpMethodOf(methodAnnotation.getNameAsString(), customAnnotations)
                       .map(httpMethod -> new EndpointConsumption(targetService,
-                          MappingAnnotations.joinPaths(classPath, MappingAnnotations.pathOf(annotation).orElse("")),
+                          MappingAnnotations.joinPaths(classPath,
+                              MappingAnnotations.pathOf(methodAnnotation).orElse("")),
                           httpMethod))
                       .stream()));
         })
