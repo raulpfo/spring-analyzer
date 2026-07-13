@@ -29,6 +29,10 @@ Tests: JUnit 5 + AssertJ + Mockito (via `spring-boot-starter-test`, ya heredado 
 - [x] #15 Application: orquestación real del caso de uso de análisis
 - [x] #16 Test de integración end-to-end del flujo completo
 
+Hitos adicionales tras el plan inicial:
+
+- [x] #33 Analyzers: anotaciones custom configurables para frameworks propios sobre Spring
+
 Actualiza esta lista (marca `[x]`) cada vez que un PR de un hito se mergea a `main`.
 
 ## Flujo de trabajo por hito (issue → PR → merge)
