@@ -89,6 +89,77 @@ class RepoSourceConfigLoaderTest {
   }
 
   @Test
+  void failsWhenCustomAnnotationsIsNotAnObject() {
+    final String yaml = """
+        customAnnotations: "com.acme.fwk.MiController"
+        repos:
+          - url: https://github.com/org/user-service.git
+        """;
+
+    assertThatThrownBy(() -> loader.parse(new StringReader(yaml)))
+        .isInstanceOf(RepoSourceConfigException.class)
+        .hasMessageContaining("customAnnotations");
+  }
+
+  @Test
+  void failsWhenCustomAnnotationsControllersIsNotAList() {
+    final String yaml = """
+        customAnnotations:
+          controllers: com.acme.fwk.MiController
+        repos:
+          - url: https://github.com/org/user-service.git
+        """;
+
+    assertThatThrownBy(() -> loader.parse(new StringReader(yaml)))
+        .isInstanceOf(RepoSourceConfigException.class)
+        .hasMessageContaining("customAnnotations.controllers");
+  }
+
+  @Test
+  void failsWhenCustomAnnotationsMappingsIsNotAnObject() {
+    final String yaml = """
+        customAnnotations:
+          mappings: com.acme.fwk.MiGet
+        repos:
+          - url: https://github.com/org/user-service.git
+        """;
+
+    assertThatThrownBy(() -> loader.parse(new StringReader(yaml)))
+        .isInstanceOf(RepoSourceConfigException.class)
+        .hasMessageContaining("customAnnotations.mappings");
+  }
+
+  @Test
+  void failsWhenCustomAnnotationsMappingsVerbKeyIsBlank() {
+    final String yaml = """
+        customAnnotations:
+          mappings:
+            "": [com.acme.fwk.MiGet]
+        repos:
+          - url: https://github.com/org/user-service.git
+        """;
+
+    assertThatThrownBy(() -> loader.parse(new StringReader(yaml)))
+        .isInstanceOf(RepoSourceConfigException.class)
+        .hasMessageContaining("customAnnotations.mappings");
+  }
+
+  @Test
+  void failsWhenCustomAnnotationsMappingsVerbKeyIsNotText() {
+    final String yaml = """
+        customAnnotations:
+          mappings:
+            123: [com.acme.fwk.MiGet]
+        repos:
+          - url: https://github.com/org/user-service.git
+        """;
+
+    assertThatThrownBy(() -> loader.parse(new StringReader(yaml)))
+        .isInstanceOf(RepoSourceConfigException.class)
+        .hasMessageContaining("customAnnotations.mappings");
+  }
+
+  @Test
   void failsWhenReposKeyIsMissing() {
     final String yaml = "foo: bar";
 

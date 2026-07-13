@@ -42,8 +42,8 @@ class ServiceSnapshotBuilderTest {
     final List<Endpoint> endpoints = List.of(new Endpoint(HttpMethod.GET, "/orders/{id}", "com.example.OrderController"));
     final List<EndpointConsumption> consumptions = List.of(new EndpointConsumption("user-service", "/users/{id}", HttpMethod.GET));
     final ServiceVersionInfo versionInfo = new ServiceVersionInfo("3.4.0", "21", List.of());
-    when(endpointAnalyzer.analyze(repoDir)).thenReturn(endpoints);
-    when(consumerAnalyzer.analyze(repoDir)).thenReturn(consumptions);
+    when(endpointAnalyzer.analyze(repoDir, CustomAnnotationsConfig.EMPTY)).thenReturn(endpoints);
+    when(consumerAnalyzer.analyze(repoDir, CustomAnnotationsConfig.EMPTY)).thenReturn(consumptions);
     when(versionAnalyzer.analyze(repoDir)).thenReturn(versionInfo);
 
     final ServiceSnapshot snapshot = builder.build(new RepoContext("order-service", repoDir));
